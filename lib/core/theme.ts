@@ -22,6 +22,9 @@ export type Theme = {
 export type ClubSettings = {
   place: string;
   noaaStation?: string;
+  nwsPoint?: [number, number]; // lat, lng for the National Weather Service wind forecast
+  vhf?: string; // radio channel the club monitors, e.g. "VHF 9"
+  address?: string;
   contactEmail?: string;
   demo?: boolean;
 };

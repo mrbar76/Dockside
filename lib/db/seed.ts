@@ -6,6 +6,14 @@ import * as s from "./schema";
 import type { Theme } from "../core/theme";
 import { LOOKS } from "../core/looks";
 
+// A one-page stand-in so every demo document opens. The club uploads the real one.
+async function sampleDoc(clubId: string, slug: string, d: { title: string; category: string; membersOnly?: boolean }) {
+  const membersOnly = d.membersOnly ?? true;
+  const text = `${d.title}\n\nThis is a sample for the demo. The club uploads the real ${d.title.toLowerCase()} here, and members open it from the Documents page.\n`;
+  const [f] = await db.insert(s.files).values({ clubId, name: `${d.title}.txt`, type: "text/plain", size: Buffer.byteLength(text), data: Buffer.from(text), membersOnly }).returning({ id: s.files.id });
+  return { clubId, title: d.title, category: d.category, membersOnly, url: `/${slug}/files/${f.id}` };
+}
+
 
 const signal: Theme = {
   skin: "signal",
@@ -110,11 +118,11 @@ async function main() {
         { clubId, offerId: offers[1].id, memberId: m.Nora, note: "Two of us if there's room.", status: "accepted", decidedAt: ago(1) },
       ]);
       await db.insert(s.documents).values([
-        { clubId, title: "Membership application", category: "Join", url: "#", membersOnly: false },
-        { clubId, title: "Bylaws", category: "Rules", url: "#" },
-        { clubId, title: "Yard and dock rules", category: "Rules", url: "#" },
-        { clubId, title: "November Board agenda", category: "Board", url: "#" },
-        { clubId, title: "Winter float storage plan (draft)", category: "Dock committee", url: "#" },
+        await sampleDoc(clubId, "mrbyc", { title: "Membership application", category: "Join", membersOnly: false }),
+        await sampleDoc(clubId, "mrbyc", { title: "Bylaws", category: "Rules" }),
+        await sampleDoc(clubId, "mrbyc", { title: "Yard and dock rules", category: "Rules" }),
+        await sampleDoc(clubId, "mrbyc", { title: "November Board agenda", category: "Board" }),
+        await sampleDoc(clubId, "mrbyc", { title: "Winter float storage plan (draft)", category: "Dock committee" }),
       ]);
     },
   );
@@ -154,8 +162,8 @@ async function main() {
       ]).returning();
       await db.insert(s.rideRequests).values([{ clubId, offerId: offers[1].id, memberId: m.Maya, note: "First time on a dinghy.", status: "pending" }]);
       await db.insert(s.documents).values([
-        { clubId, title: "Join the club", category: "Join", url: "#", membersOnly: false },
-        { clubId, title: "Sailing instructions", category: "Racing", url: "#" },
+        await sampleDoc(clubId, "harbor-point", { title: "Join the club", category: "Join", membersOnly: false }),
+        await sampleDoc(clubId, "harbor-point", { title: "Sailing instructions", category: "Racing" }),
       ]);
     },
   );

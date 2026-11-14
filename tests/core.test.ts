@@ -194,3 +194,53 @@ describe("calendar feed, roster, time, tides", () => {
     expect(heightAt(tides, new Date("2026-01-01T09:00Z"))).toBeNull();
   });
 });
+
+describe("v1 gaps: files, pages, export, wind", async () => {
+  const { files, clubPages } = await import("../lib/db/schema");
+  const { rowsOf, toCsv } = await import("../lib/core/export");
+  const { toKnots } = await import("../lib/core/wind");
+  const { toZonedInput } = await import("../lib/core/time");
+  const { clubPage } = await import("../lib/core/data");
+
+  it("keeps uploaded files and club pages inside their own club", async () => {
+    const [f] = await inA((tx) => tx.insert(files).values({ name: "t.txt", type: "text/plain", size: 2, data: Buffer.from("hi"), membersOnly: true }).returning());
+    await inA((tx) => tx.insert(clubPages).values({ key: "about", title: "About us", body: "Hello" }));
+    expect(await withClub(B.id, (tx) => tx.select().from(files).where(eq(files.id, f.id)))).toEqual([]);
+    expect(await withClub(B.id, (tx) => tx.select().from(clubPages).where(eq(clubPages.key, "about")))).toEqual([]);
+    const page = await inA((tx) => clubPage(tx, A, "about"));
+    expect(page.title).toBe("About us");
+    expect(page.isDefault).toBe(false);
+    await inA(async (tx) => { await tx.delete(files).where(eq(files.id, f.id)); await tx.delete(clubPages).where(eq(clubPages.key, "about")); });
+  });
+
+  it("gives every club a privacy draft until the Board writes its own", async () => {
+    const p = await withClub(B.id, (tx) => clubPage(tx, B, "privacy"));
+    expect(p.isDefault).toBe(true);
+    expect(p.body).toMatch(/STOP/);
+  });
+
+  it("exports the club's data without sign-in links, phone keys or file contents", async () => {
+    const people = (await inA((tx) => rowsOf(tx, "members")))!;
+    expect(people.length).toBeGreaterThanOrEqual(10);
+    expect(Object.keys(people[0])).not.toContain("linkToken");
+    expect(Object.keys(people[0])).not.toContain("feedToken");
+    const fl = (await inA((tx) => rowsOf(tx, "files")))!;
+    expect(fl.every((r) => !("data" in r))).toBe(true);
+    expect(await inA((tx) => rowsOf(tx, "nope"))).toBeNull();
+  });
+
+  it("writes spreadsheet cells that cannot run as formulas", () => {
+    const csv = toCsv([{ a: "=HYPERLINK(1)", b: 'say "hi", ok', c: null, d: new Date("2026-01-01T00:00:00Z") }]);
+    expect(csv).toBe(`a,b,c,d\r\n"'=HYPERLINK(1)","say ""hi"", ok",,2026-01-01T00:00:00.000Z\r\n`);
+  });
+
+  it("reads NWS wind in knots", () => {
+    expect(toKnots("10 mph")).toBe("9 kt");
+    expect(toKnots("5 to 15 mph")).toBe("4 to 13 kt");
+  });
+
+  it("fills an edit form with the club's local time", () => {
+    const d = zonedToUtc("2026-07-04T18:30", "America/New_York");
+    expect(toZonedInput(d, "America/New_York")).toBe("2026-07-04T18:30");
+  });
+});

@@ -22,6 +22,8 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
       <Flash sp={await searchParams} />
       <p className="inline">
         <Link className="btn quiet" href={`/${slug}/officers/roster`}>Roster</Link>
+        <Link className="btn quiet" href={`/${slug}/officers/groups`}>Groups</Link>
+        <Link className="btn quiet" href={`/${slug}/officers/site`}>Club pages and data</Link>
         <Link className="btn quiet" href={`/${slug}/officers/sheet`}>Print the weekly sheet</Link>
       </p>
       <form className="form stack" action={postNotice.bind(null, slug)}>
@@ -56,7 +58,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
         <h2>What went out</h2>
         <form action={sendWeeklyNow.bind(null, slug)} style={{ marginBottom: "1rem" }}><button className="btn quiet sm">Send the weekly message now</button></form>
         {log.length === 0 ? <p className="muted">Nothing has been sent yet.</p> : (
-          <div className="scroll">
+          <div className="scroll" tabIndex={0} role="region" aria-label="Messages sent, scrolls sideways">
             <table className="people">
               <thead><tr><th>When</th><th>To</th><th>What</th><th>How</th><th>Result</th></tr></thead>
               <tbody>
@@ -64,7 +66,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
                   <tr key={d.id}>
                     <td className="small">{fmtWhen(d.createdAt, club.timezone)}</td>
                     <td>{member ? fullName(member) : ""}</td>
-                    <td>{d.kind === "weekly" ? "Weekly message" : d.kind === "signin" ? "Sign-in code" : notice?.title ?? "Notice"}</td>
+                    <td>{d.kind === "weekly" ? "Weekly message" : d.kind === "signin" ? "Sign-in code" : d.kind === "ride" ? "Crew board" : d.kind === "event" ? "Event change" : notice?.title ?? "Notice"}</td>
                     <td>{d.channel}</td>
                     <td>{said[d.status]}</td>
                   </tr>

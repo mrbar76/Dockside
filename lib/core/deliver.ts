@@ -71,7 +71,7 @@ async function sendAlert(tx: Tx, memberId: string, msg: Message): Promise<Outcom
 
 // Sends by the member's channel. Text needs recorded consent and a phone
 // number; an alert with no device registered falls back to email.
-export async function deliverTo(tx: Tx, club: Club, m: Member, msg: Message, kind: "notice" | "weekly", noticeId?: string) {
+export async function deliverTo(tx: Tx, club: Club, m: Member, msg: Message, kind: "notice" | "weekly" | "ride" | "event", noticeId?: string) {
   let channel: string = m.channel;
   let out: Outcome;
   if (channel === "none") out = { status: "skipped", detail: "member chose calendar and dock sheet only" };

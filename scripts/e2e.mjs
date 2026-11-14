@@ -22,12 +22,12 @@ const shot = (name) => page.screenshot({ path: `shots/${name}.png`, fullPage: !p
 async function signIn(slug, email) {
   await go(`/${slug}/sign-in`);
   await page.type('input[name="email"]', email);
-  await page.click("button.btn.go");
+  await page.$eval('input[name="email"]', (el) => el.form.requestSubmit());
   await until("is on its way");
   const code = /Your code is (\d{6})/.exec(await text())?.[1];
   if (!code) return false;
   await page.type('input[name="code"]', code);
-  await page.click("button.btn.go");
+  await page.$eval('input[name="code"]', (el) => el.form.requestSubmit());
   return until("Hello, ");
 }
 async function signOut(slug) {
@@ -54,11 +54,11 @@ await check("one club's personal link does not open another club", () => has("Th
 // Sign-in guard rails
 await go("/mrbyc/sign-in");
 await page.type('input[name="email"]', "stranger@example.com");
-await page.click("button.btn.go");
+await page.$eval('input[name="email"]', (el) => el.form.requestSubmit());
 await until("is on its way");
 await check("an address off the roster gets the same answer and no code", async () => !(await has("Your code is")));
 await page.type('input[name="code"]', "000000");
-await page.click("button.btn.go");
+await page.$eval('input[name="code"]', (el) => el.form.requestSubmit());
 await check("a wrong code is refused", () => until("did not match"));
 
 // A household sharing one email address
@@ -75,7 +75,7 @@ await shot("mrbyc-event-phone");
 await go("/mrbyc/rides");
 await check("owner sees the raised hand with experience level", () => has("Priya Raman, new to boats"));
 await clickText("Accept");
-await check("owner accepts crew", () => until("Accepted. They can see it on the board."));
+await check("owner accepts crew", () => until("Accepted. They have been told."));
 await shot("mrbyc-rides-phone");
 await go("/mrbyc/me");
 await check("household profile picker appears", () => has("Who is using this phone?"));
@@ -93,6 +93,15 @@ await signOut("mrbyc");
 await signIn("mrbyc", "priya.raman@example.com");
 await go("/mrbyc/rides");
 await check("accepted member sees she is aboard", () => has("You are aboard"));
+await go("/mrbyc/this-week");
+await check("this week names her next thing", () => has("Your next:"));
+await go("/mrbyc/rides");
+await clickText("I can't make it");
+await check("a member can take back her hand", () => until("Your hand is down."));
+await go("/mrbyc/me");
+await page.$eval('input[name="boatName"]', (el) => (el.value = "Dinghy Dream"));
+await clickText("Save my details");
+await check("a member corrects her own details", async () => (await until("Saved.")) && (await page.$eval('input[name="boatName"]', (el) => el.value)) === "Dinghy Dream");
 await signOut("mrbyc");
 
 // Officer: post once
@@ -124,8 +133,100 @@ await go("/mrbyc");
 await shot("mrbyc-home-desktop");
 await go("/mrbyc/this-week");
 await shot("mrbyc-this-week-desktop");
+
+// Officer: change and cancel an event, fix a notice
+const openPanel = (t) => page.evaluate((t) => { const d = [...document.querySelectorAll("details")].find((x) => x.querySelector("summary").textContent.includes(t)); if (d) d.open = true; return !!d; }, t);
+const inPanel = (t, sel) => page.evaluateHandle((t, sel) => [...document.querySelectorAll("details")].find((x) => x.querySelector("summary").textContent.includes(t)).querySelector(sel), t, sel);
+await go("/mrbyc/calendar");
+await page.evaluate(() => [...document.querySelectorAll("a.event")].find((a) => a.textContent.includes("Chili cook-off")).click());
+await until("Change or cancel this event");
+await openPanel("Change or cancel");
+await page.$eval('details input[name="location"]', (el) => (el.value = "Clubhouse porch"));
+await clickText("Save changes");
+await check("officer edits an event", async () => (await until("Event saved")) && (await has("Clubhouse porch")));
+await openPanel("Change or cancel");
+await page.type('input[name="reason"]', "Gale warning.");
+await clickText("Cancel the event");
+await check("officer cancels and the sign-ups are told", async () => (await until("who signed up were told")) && (await has("Cancelled: Chili cook-off")));
+await openPanel("Change or cancel");
+await clickText("Put the event back on");
+await check("officer puts it back on", () => until("The event is back on."));
+await go("/mrbyc/news");
+await openPanel("Fuel dock closed today");
+await (await inPanel("Fuel dock closed today", 'input[name="title"]')).evaluate((el) => (el.value = "Fuel dock open again"));
+await (await inPanel("Fuel dock closed today", "button.btn.go")).click();
+await check("officer fixes a notice", async () => (await until("Notice saved")) && (await has("Fuel dock open again")));
+await openPanel("Fuel dock open again");
+await (await inPanel("Fuel dock open again", "button.btn.quiet")).click();
+await check("officer removes a notice", async () => (await until("Notice removed.")) && !(await has("Fuel dock open again")));
+
+// Officer: members, roles, groups
+await go("/mrbyc/officers/groups");
+await page.type('input[placeholder="Race committee"]', "Race committee");
+await clickText("Add group");
+await check("officer adds a group", () => until("Race committee added"));
+await go("/mrbyc/officers/members/new");
+await page.type('input[name="firstName"]', "Lena");
+await page.type('input[name="lastName"]', "Ostrova");
+await page.type('input[name="email"]', "lena.ostrova@example.com");
+await page.evaluate(() => [...document.querySelectorAll("label.check")].find((l) => l.textContent.includes("Race committee")).querySelector("input").click());
+await clickText("Add to roster");
+await check("officer adds a member straight onto a group", () => until("Lena is on the roster."));
+await go("/mrbyc/officers/groups");
+await check("the group lists her", () => has("Lena Ostrova"));
+await go("/mrbyc/officers/roster");
+await page.evaluate(() => [...document.querySelectorAll("a")].find((a) => a.textContent === "Ada Brennan").click());
+await until("Access");
+await page.select('select[name="role"]', "member");
+await clickText("Save");
+await check("an officer cannot take away her own officer access", () => until("Ask another officer"));
+
+// Officer: documents, club pages, data
+fs.writeFileSync("/tmp/e2e-rates.pdf", "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+await go("/mrbyc/documents");
+await page.type('input[name="title"]', "2027 slip rates");
+await page.type('input[name="category"]', "Rules");
+await (await page.$('input[name="file"]')).uploadFile("/tmp/e2e-rates.pdf");
+await clickText("Add document");
+await check("officer uploads a document", () => until("2027 slip rates is up."));
+const docHref = await page.evaluate(() => [...document.querySelectorAll("a")].find((a) => a.textContent === "2027 slip rates")?.getAttribute("href"));
+const docRes = await page.evaluate(async (h) => { const r = await fetch(h); return `${r.status} ${r.headers.get("content-type")}`; }, docHref);
+await check("the uploaded file opens for a member", docRes === "200 application/pdf");
+const dead = await page.evaluate(() => [...document.querySelectorAll("main a")].filter((a) => a.getAttribute("href") === "#").length);
+await check("no document link is a dead end", dead === 0);
+await go("/mrbyc/officers/site");
+await page.$eval('details[open] textarea[name="body"]', (el) => (el.value = "Welcome aboard.\n\nRacing Thursdays all summer."));
+const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+fs.writeFileSync("/tmp/e2e-photo.png", png);
+await (await page.$('details[open] input[name="photo"]')).uploadFile("/tmp/e2e-photo.png");
+await page.evaluate(() => document.querySelector("details[open] button.btn.go").click());
+await check("officer saves the front page with a photo", () => until("Page saved"));
+await go("/mrbyc");
+await check("front page shows the welcome, photo, join and contact", async () => (await has("Racing Thursdays")) && (await page.$(".home-photo img")) !== null && (await has("How to join")) && (await has("Contact")));
+await go("/mrbyc/officers/site");
+await openPanel("About");
+await (await inPanel("About", 'textarea[name="body"]')).evaluate((el) => (el.value = "Founded on the Mianus River. Members of all ages."));
+await (await inPanel("About", "button.btn.go")).click();
+await until("Page saved");
+await go("/mrbyc/about");
+await check("officer edits the About page", () => has("Founded on the Mianus River"));
+for (const k of ["join", "contact", "privacy"]) { await go(`/mrbyc/${k}`); await check(`${k} page has content`, async () => (await text()).length > 400); }
+const csv = await page.evaluate(async () => { const r = await fetch("/mrbyc/officers/export/members.csv"); return { s: r.status, t: await r.text() }; });
+await check("officer downloads the roster without secret links", csv.s === 200 && csv.t.includes("firstName") && !csv.t.includes("demo-mrbyc"));
+const all = await page.evaluate(async () => { const r = await fetch("/mrbyc/officers/export/everything.json"); return r.ok ? Object.keys(await r.json()).length : 0; });
+await check("officer downloads everything as one file", all >= 15);
+
 await page.setViewport(phone);
 await signOut("mrbyc");
+await check("members-only file is closed when signed out", async () => (await page.evaluate(async (h) => (await fetch(h, { cache: "no-store" })).status, docHref)) === 401);
+await check("data downloads are closed when signed out", async () => (await page.evaluate(async () => (await fetch("/mrbyc/officers/export/members.csv")).status)) === 403);
+
+// Page weight on a phone: the dock QR code page should load fast on one bar.
+await go("/mrbyc/this-week");
+const kb = await page.evaluate(() => Math.round(performance.getEntriesByType("resource").concat(performance.getEntriesByType("navigation")).reduce((n, e) => n + (e.transferSize || e.encodedBodySize || 0), 0) / 1024));
+await check(`this week weighs under 600 KB on a phone (${kb} KB)`, kb < 600);
+const small = await page.evaluate(() => [...document.querySelectorAll("main a, main button, main input, main select, .tabs a, .foot a")].filter((el) => { const r = el.getBoundingClientRect(); return r.width && r.height && (r.height < 24 || r.width < 24) && getComputedStyle(el).display !== "inline"; }).length);
+await check(`no tap target under 24 px (${small})`, small === 0);
 
 // Second club, second look, same core
 await go("/harbor-point/this-week");
@@ -141,7 +242,7 @@ await check("a member of one club is not a member of the other", async () => {
   await page.setViewport(phone);
   await go("/harbor-point/sign-in");
   await page.type('input[name="email"]', "ada.brennan@example.com");
-  await page.click("button.btn.go");
+  await page.$eval('input[name="email"]', (el) => el.form.requestSubmit());
   await until("is on its way");
   return !(await has("Your code is"));
 });

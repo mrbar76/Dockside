@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireClub } from "@/lib/core/clubs";
@@ -75,7 +76,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
           </form>
         </>
       )}
-      <p className="small muted">You stay signed in on this phone for 90 days. Sharing an email address with your partner is fine: you each get your own profile.</p>
+      <p className="small muted">You stay signed in on this phone for 90 days. Sharing an email address with your partner is fine: you each get your own profile. <Link href={`/${slug}/privacy`}>What the club keeps about members</Link>.</p>
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default async function Page({ params }: PageProps<"/[club]/directory">) {
     <div className="wrap stack">
       <h1>Directory</h1>
       <p className="muted">For members only. Choose whether you are listed on the Me page.</p>
-      <div className="scroll">
+      <div className="scroll" tabIndex={0} role="region" aria-label="Member directory, scrolls sideways">
         <table className="people">
           <thead><tr><th>Name</th><th>Boat</th><th>Reach them</th></tr></thead>
           <tbody>

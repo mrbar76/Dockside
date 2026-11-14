@@ -32,15 +32,24 @@ export function heightAt(tides: Tide[], t: Date): number | null {
   return null;
 }
 
-// The station's charted position, e.g. "41°01′N 73°36′W", from NOAA's station list.
-export async function getStationPosition(station: string | undefined): Promise<string | null> {
+// The station's latitude and longitude from NOAA's station list.
+export async function getStationLatLng(station: string | undefined): Promise<{ lat: number; lng: number } | null> {
   if (!station) return null;
   try {
     const res = await fetch(`https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/${station}.json`, {
       next: { revalidate: 86400 }, signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
-    const s = ((await res.json()) as { stations?: { lat: number; lng: number }[] }).stations?.[0];
+    return ((await res.json()) as { stations?: { lat: number; lng: number }[] }).stations?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// The station's charted position, e.g. "41°01′N 73°36′W".
+export async function getStationPosition(station: string | undefined): Promise<string | null> {
+  try {
+    const s = await getStationLatLng(station);
     if (!s) return null;
     const dm = (v: number, pos: string, neg: string, w: number) => {
       const a = Math.abs(v), d = Math.floor(a), m = Math.round((a - d) * 60);

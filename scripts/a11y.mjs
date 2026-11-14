@@ -1,0 +1,30 @@
+// Accessibility and look check: axe-core on the main pages, plus phone screenshots.
+import fs from "node:fs";
+import puppeteer from "puppeteer-core";
+const axe = fs.readFileSync("node_modules/axe-core/axe.min.js", "utf8");
+const base = process.argv[2] ?? "http://localhost:3000";
+const b = await puppeteer.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox"] });
+const p = await b.newPage();
+await p.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const go = (u) => p.goto(base + u, { waitUntil: "networkidle0" });
+const run = async (u, name) => {
+  await go(u);
+  await p.evaluate(axe);
+  const r = await p.evaluate(async () => (await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21aa", "best-practice"] })).violations.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0].target}`));
+  console.log(`${u}: ${r.length ? r.join(" | ") : "clean"}`);
+  if (name) await p.screenshot({ path: `shots/${name}.png` });
+};
+const pub = ["/mrbyc", "/mrbyc/this-week", "/mrbyc/about", "/mrbyc/join", "/mrbyc/contact", "/mrbyc/privacy", "/mrbyc/documents", "/mrbyc/sign-in", "/harbor-point"];
+for (const u of pub) await run(u, u === "/mrbyc" ? "v1-home-phone" : u === "/mrbyc/join" ? "v1-join-phone" : null);
+await go("/mrbyc/sign-in");
+await Promise.all([p.waitForNavigation({ waitUntil: "networkidle0" }), p.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent.includes("Officer")).click())]);
+const mem = ["/mrbyc/this-week", "/mrbyc/rides", "/mrbyc/me", "/mrbyc/news", "/mrbyc/directory", "/mrbyc/officers", "/mrbyc/officers/roster", "/mrbyc/officers/groups", "/mrbyc/officers/site", "/mrbyc/documents"];
+for (const u of mem) await run(u, u === "/mrbyc/this-week" ? "v1-this-week-officer-phone" : u === "/mrbyc/officers/site" ? "v1-site-phone" : null);
+await go("/mrbyc/calendar");
+const ev = await p.evaluate(() => document.querySelector("a.event").getAttribute("href"));
+await go(ev);
+await p.evaluate(() => { document.querySelector("details.officer-panel").open = true; });
+await p.evaluate(axe);
+console.log("event+panel:", (await p.evaluate(async () => (await window.axe.run()).violations.map((v) => v.id))).join(",") || "clean");
+await p.screenshot({ path: "shots/v1-event-officer-phone.png", fullPage: true });
+await b.close();

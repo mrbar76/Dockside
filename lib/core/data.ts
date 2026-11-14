@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { Tx } from "../db";
 import {
-  auditLog, deliveries, documents, eventSignups, events, groupMembers, groups, members, notices,
+  auditLog, clubPages, deliveries, documents, eventSignups, events, groupMembers, groups, members, notices,
   rideOffers, rideRequests, type Member,
 } from "../db/schema";
 
@@ -132,3 +132,45 @@ export async function thisWeek(tx: Tx, viewer: Member | null, now: Date) {
   return { events: weekEvents, counts, going, notices: weekNotices, rides: rides.filter((r) => r.offer.departsAt <= new Date(now.getTime() + 14 * 86400000)) };
 }
 export type ThisWeek = Awaited<ReturnType<typeof thisWeek>>;
+
+// Officers and members
+export const officerCount = async (tx: Tx) =>
+  (await tx.select({ n: sql<number>`count(*)::int` }).from(members).where(and(eq(members.role, "officer"), eq(members.active, true))))[0].n;
+export const allMembers = (tx: Tx) => tx.select().from(members).orderBy(asc(members.lastName), asc(members.firstName));
+export async function groupsWithCounts(tx: Tx) {
+  const gs = await listGroups(tx);
+  const rows = await tx.select({ groupId: groupMembers.groupId, member: members }).from(groupMembers)
+    .innerJoin(members, eq(members.id, groupMembers.memberId)).orderBy(asc(members.lastName));
+  return gs.map((g) => ({ group: g, people: rows.filter((r) => r.groupId === g.id).map((r) => r.member) }));
+}
+
+// Club pages, with a sensible starting text until officers write their own.
+export async function clubPage(tx: Tx, club: { name: string; about: string; settings: { place: string; contactEmail?: string; address?: string } }, key: "about" | "join" | "contact" | "privacy" | "home") {
+  const [row] = await tx.select().from(clubPages).where(eq(clubPages.key, key)).limit(1);
+  if (row) return { ...row, isDefault: false };
+  const defaults = {
+    home: { title: club.name, body: "" },
+    about: { title: "About the club", body: club.about },
+    join: {
+      title: "Joining the club",
+      body: `${club.name} is run by its members. New members are proposed, meet the Board, and help with the work that keeps the docks going.\n\nTo start, read the membership application below and send it to the club. An officer will be in touch.`,
+    },
+    contact: {
+      title: "Contact",
+      body: `${club.settings.address ?? club.settings.place}\n\n${club.settings.contactEmail ? `Email ${club.settings.contactEmail}` : ""}`,
+    },
+    privacy: {
+      title: "Privacy notice",
+      body: [
+        `This notice explains what ${club.name} keeps about its members and why. It is a starting draft for the Board to review and adopt.`,
+        "What we keep: your name, email address, phone number if you give it, your boat's name and type, which events you sign up for, and seats you offer or ask for on the crew board.",
+        "Why: to run the club. To tell you what is happening, keep the member directory, organize events, and help members get out on the water together.",
+        "Who sees it: members who are signed in see the directory, unless you choose to leave it. Officers see the full roster and a log of messages sent. The public sees only events, club-wide news and tides. We do not sell or share member details.",
+        "Messages: you choose how the club reaches you on your Me page: email, one weekly text, phone alerts, or nothing. Reply STOP to any text to end texts.",
+        "Your choices: you can change what you share at any time on your Me page. To have your details removed, ask an officer.",
+        `Questions: ${club.settings.contactEmail ?? "ask any officer"}.`,
+      ].join("\n\n"),
+    },
+  }[key];
+  return { id: null, key, title: defaults.title, body: defaults.body, photoId: null, updatedAt: null, isDefault: true };
+}

@@ -11,9 +11,9 @@ import { alertSubscriptions, auditLog, deliveries, events, members, notices, rid
 import { requireClub } from "@/lib/core/clubs";
 import { getViewer, origin } from "@/lib/core/viewer";
 import { cancelSignup, decideRequest, newToken, signUp } from "@/lib/core/data";
-import { sendEmail, sendNoticeNow, sendWeekly } from "@/lib/core/deliver";
+import { deliverTo, sendEmail, sendNoticeNow, sendWeekly } from "@/lib/core/deliver";
 import { importRoster } from "@/lib/core/roster";
-import { zonedToUtc } from "@/lib/core/time";
+import { fmtWhen, zonedToUtc } from "@/lib/core/time";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong. Try again.");
@@ -196,15 +196,69 @@ export async function offerSeat(slug: string, f: FormData) {
 
 export async function raiseHand(slug: string, offerId: string, f: FormData) {
   const { club, me } = await member(slug);
-  await withClub(club.id, (tx) => tx.insert(rideRequests).values({ offerId, memberId: me.id, note: str(f, "note").slice(0, 200) }).onConflictDoNothing());
-  to(`/${slug}/rides`, "ok", "Your hand is up. The owner decides and you will see it here.");
+  const base = await origin();
+  await withClub(club.id, async (tx) => {
+    const added = await tx.insert(rideRequests).values({ offerId, memberId: me.id, note: str(f, "note").slice(0, 200) }).onConflictDoNothing().returning();
+    if (added.length === 0) return;
+    const [row] = await tx.select({ offer: rideOffers, owner: members }).from(rideOffers).innerJoin(members, eq(members.id, rideOffers.ownerId)).where(eq(rideOffers.id, offerId));
+    if (row) await deliverTo(tx, club, row.owner, {
+      subject: `${me.firstName} ${me.lastName} raised a hand: ${row.offer.title}`,
+      body: `${fmtWhen(row.offer.departsAt, club.timezone)}. Accept or decline on the crew board.`, url: `${base}/${slug}/rides#${offerId}`,
+    }, "ride");
+  });
+  to(`/${slug}/rides`, "ok", "Your hand is up. The owner has been told and decides who comes.");
 }
 
 export async function decide(slug: string, requestId: string, accept: boolean) {
   const { club, me } = await member(slug);
-  try { await withClub(club.id, (tx) => decideRequest(tx, requestId, me.id, accept)); }
-  catch (e) { to(`/${slug}/rides`, "error", msg(e)); }
-  to(`/${slug}/rides`, "ok", accept ? "Accepted. They can see it on the board." : "Declined.");
+  const base = await origin();
+  try {
+    await withClub(club.id, async (tx) => {
+      await decideRequest(tx, requestId, me.id, accept);
+      const [row] = await tx.select({ req: rideRequests, offer: rideOffers, who: members }).from(rideRequests)
+        .innerJoin(rideOffers, eq(rideOffers.id, rideRequests.offerId)).innerJoin(members, eq(members.id, rideRequests.memberId))
+        .where(eq(rideRequests.id, requestId));
+      if (row) await deliverTo(tx, club, row.who, {
+        subject: accept ? `You're aboard: ${row.offer.title}` : `Not this time: ${row.offer.title}`,
+        body: accept
+          ? `${me.firstName} accepted you for ${fmtWhen(row.offer.departsAt, club.timezone)}${me.boatName ? ` aboard ${me.boatName}` : ""}.`
+          : `${me.firstName} has a full boat for this one. Watch the board for the next seat.`,
+        url: `${base}/${slug}/rides`,
+      }, "ride");
+    });
+  } catch (e) { to(`/${slug}/rides`, "error", msg(e)); }
+  to(`/${slug}/rides`, "ok", accept ? "Accepted. They have been told." : "Declined. They have been told kindly.");
+}
+
+// A member takes back a raised hand. If they were already aboard, the owner hears.
+export async function withdrawHand(slug: string, offerId: string) {
+  const { club, me } = await member(slug);
+  const base = await origin();
+  await withClub(club.id, async (tx) => {
+    const [gone] = await tx.delete(rideRequests).where(and(eq(rideRequests.offerId, offerId), eq(rideRequests.memberId, me.id))).returning();
+    if (gone?.status !== "accepted") return;
+    const [row] = await tx.select({ offer: rideOffers, owner: members }).from(rideOffers).innerJoin(members, eq(members.id, rideOffers.ownerId)).where(eq(rideOffers.id, offerId));
+    if (row) await deliverTo(tx, club, row.owner, {
+      subject: `${me.firstName} ${me.lastName} can't make it: ${row.offer.title}`,
+      body: "A seat is open again on the crew board.", url: `${base}/${slug}/rides#${offerId}`,
+    }, "ride");
+  });
+  to(`/${slug}/rides`, "ok", "Your hand is down.");
+}
+
+// A member corrects their own details.
+export async function saveProfile(slug: string, f: FormData) {
+  const { club, me } = await member(slug);
+  const firstName = str(f, "firstName"), lastName = str(f, "lastName");
+  if (!firstName || !lastName) to(`/${slug}/me`, "error", "Your first and last name are needed for the directory.");
+  const t = str(f, "boatType"), x = str(f, "experience");
+  await withClub(club.id, (tx) => tx.update(members).set({
+    firstName, lastName, boatName: str(f, "boatName") || null,
+    boatType: (t === "sail" || t === "power" ? t : null) as "sail" | "power" | null,
+    experience: (x === "new" || x === "seasoned" ? x : "some") as "new" | "some" | "seasoned",
+  }).where(eq(members.id, me.id)));
+  revalidatePath(`/${slug}`, "layout");
+  to(`/${slug}/me`, "ok", "Saved.");
 }
 
 export async function withdrawOffer(slug: string, offerId: string) {

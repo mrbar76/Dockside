@@ -2,6 +2,7 @@ import { requireClub } from "@/lib/core/clubs";
 import { withClub } from "@/lib/db";
 import { thisWeek } from "@/lib/core/data";
 import { getTides } from "@/lib/core/tides";
+import { getConditions } from "@/lib/core/wind";
 import { getViewer } from "@/lib/core/viewer";
 import { ThisWeekView } from "@/components/ThisWeekView";
 
@@ -13,9 +14,10 @@ export default async function Page({ params }: PageProps<"/[club]/this-week">) {
   const club = await requireClub((await params).club);
   const viewer = await getViewer(club.id);
   const now = new Date();
-  const [data, tides] = await Promise.all([
+  const [data, tides, { wind, position }] = await Promise.all([
     withClub(club.id, (tx) => thisWeek(tx, viewer?.member ?? null, now)),
     getTides(club.settings.noaaStation, now),
+    getConditions(club.settings),
   ]);
-  return <ThisWeekView club={club} data={data} tides={tides} viewer={viewer?.member ?? null} mode={viewer ? "member" : "public"} now={now} />;
+  return <ThisWeekView club={club} data={data} tides={tides} viewer={viewer?.member ?? null} mode={viewer ? "member" : "public"} now={now} wind={wind} position={position} />;
 }

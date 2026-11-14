@@ -47,11 +47,12 @@ export function NoticeList({ notices, tz }: { notices: Notice[]; tz: string }) {
 export function UrgentNotices({ notices }: { notices: Notice[] }) {
   return (
     <>
+      {notices.length > 0 && <h2 className="sr-only">Urgent</h2>}
       {notices.map((n) => (
-        <article key={n.id} className="notice urgent" role="alert">
+        <div key={n.id} className="notice urgent" role="alert">
           <h3>{n.title}</h3>
           <p>{n.body}</p>
-        </article>
+        </div>
       ))}
     </>
   );

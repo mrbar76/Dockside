@@ -43,8 +43,8 @@ export default async function ClubLayout({ children, params }: LayoutProps<"/[cl
     { href: `${base}/this-week`, label: "This week" },
     { href: `${base}/calendar`, label: "Calendar" },
     { href: `${base}/rides`, label: "Rides" },
-    { href: `${base}/news`, label: "News" },
-    { href: `${base}/directory`, label: "Directory", wideOnly: true },
+    { href: `${base}/directory`, label: "Members" },
+    { href: `${base}/news`, label: "News", wideOnly: true },
     { href: `${base}/documents`, label: "Documents", wideOnly: true },
     ...(viewer?.isOfficer ? [{ href: `${base}/officers`, label: "Officers", wideOnly: true }] : []),
     { href: `${base}/me`, label: "Me" },
@@ -52,7 +52,7 @@ export default async function ClubLayout({ children, params }: LayoutProps<"/[cl
   return (
     <div className="club" data-skin={theme.skin} style={themeVars(theme)}>
       {club.settings.demo && (
-        <div className="demo-bar">
+        <aside className="demo-bar" aria-label="Demonstration notice">
           <p>Demonstration with made-up people and events. Not the club&apos;s live site.</p>
           {looks.length > 1 && (
             <nav className="looks" aria-label="Try a look">
@@ -62,7 +62,7 @@ export default async function ClubLayout({ children, params }: LayoutProps<"/[cl
               ))}
             </nav>
           )}
-        </div>
+        </aside>
       )}
       <header>
         <div className="masthead">
@@ -81,8 +81,17 @@ export default async function ClubLayout({ children, params }: LayoutProps<"/[cl
       </header>
       <main className="club-body">{children}</main>
       <footer className="foot">
-        {club.name}, {club.settings.place}.{" "}
-        {club.settings.contactEmail && <a href={`mailto:${club.settings.contactEmail}`}>{club.settings.contactEmail}</a>}
+        <p>
+          {club.name}, {club.settings.address ?? club.settings.place}.{" "}
+          {club.settings.contactEmail && <a href={`mailto:${club.settings.contactEmail}`}>{club.settings.contactEmail}</a>}
+        </p>
+        <nav aria-label="About the club">
+          <Link href={`${base}/about`}>About</Link>
+          <Link href={`${base}/join`}>Joining</Link>
+          <Link href={`${base}/contact`}>Contact</Link>
+          <Link href={`${base}/documents`}>Documents</Link>
+          <Link href={`${base}/privacy`}>Privacy</Link>
+        </nav>
       </footer>
     </div>
   );

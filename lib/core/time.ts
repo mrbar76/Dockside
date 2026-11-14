@@ -35,3 +35,9 @@ export const fmtTime = (d: Date, tz: string) =>
   new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(d).toLowerCase();
 export const fmtWhen = (d: Date, tz: string) => `${fmtDayShort(d, tz)} at ${fmtTime(d, tz)}`;
 export const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86400000);
+
+// A UTC Date as the "YYYY-MM-DDTHH:mm" a date-time field expects, in club time.
+export function toZonedInput(d: Date, tz: string): string {
+  const p = parts(d, tz);
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}

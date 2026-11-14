@@ -4,7 +4,7 @@ import { fullName } from "@/lib/core/data";
 import { origin, requireViewer } from "@/lib/core/viewer";
 import { AlertsButton } from "@/components/AlertsButton";
 import { Flash } from "@/components/Flash";
-import { chooseProfile, forgetAlerts, resetLinks, saveChannel, signOut } from "../actions";
+import { chooseProfile, forgetAlerts, resetLinks, saveChannel, saveProfile, signOut } from "../actions";
 
 export const metadata = { title: "Me" };
 
@@ -51,6 +51,25 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
         <label className="check"><input type="checkbox" name="inDirectory" defaultChecked={me.inDirectory} /><span>List me in the member directory.</span></label>
         <button className="btn">Save</button>
       </form>
+      <form className="form stack" action={saveProfile.bind(null, slug)}>
+        <h2>My details</h2>
+        <div className="inline">
+          <label className="field" style={{ flex: 1, minWidth: "10rem" }}><span>First name</span><input name="firstName" required maxLength={60} defaultValue={me.firstName} autoComplete="given-name" /></label>
+          <label className="field" style={{ flex: 1, minWidth: "10rem" }}><span>Last name</span><input name="lastName" required maxLength={60} defaultValue={me.lastName} autoComplete="family-name" /></label>
+        </div>
+        <div className="inline">
+          <label className="field" style={{ flex: 1, minWidth: "10rem" }}><span>Boat name</span><input name="boatName" maxLength={60} defaultValue={me.boatName ?? ""} /></label>
+          <label className="field" style={{ width: "10rem" }}><span>Boat type</span>
+            <select name="boatType" defaultValue={me.boatType ?? ""}><option value="">No boat</option><option value="sail">Sail</option><option value="power">Power</option></select>
+          </label>
+        </div>
+        <label className="field"><span>Time on the water</span>
+          <select name="experience" defaultValue={me.experience}><option value="new">New to boats</option><option value="some">Some</option><option value="seasoned">Seasoned</option></select>
+          <small>Boat owners see this when you raise a hand for a seat.</small>
+        </label>
+        <p className="muted small">To change your email address, ask an officer.</p>
+        <button className="btn">Save my details</button>
+      </form>
       <section className="form stack">
         <h2>Club events in my own calendar</h2>
         <p>Tap once and club events appear in your phone&apos;s calendar and stay up to date.</p>
@@ -73,6 +92,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
         <Link className="btn quiet" href={`/${slug}/documents`}>Documents</Link>
         {isOfficer && <Link className="btn quiet" href={`/${slug}/officers`}>Officers</Link>}
       </p>
+      <p className="small">What the club keeps about you, and why: <Link href={`/${slug}/privacy`}>privacy</Link>.</p>
       <form action={signOut.bind(null, slug)}><button className="linkish">Sign out</button></form>
     </div>
   );

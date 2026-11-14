@@ -2,8 +2,10 @@
 // rule in the database limits each request to one club (see withClub in ./index).
 import { sql } from "drizzle-orm";
 import {
-  pgTable, pgPolicy, pgRole, uuid, text, timestamp, boolean, integer, jsonb, index, uniqueIndex,
+  pgTable, pgPolicy, pgRole, uuid, text, timestamp, boolean, integer, jsonb, index, uniqueIndex, customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 import type { Theme, ClubSettings } from "../core/theme";
 
 export const appRole = pgRole("dockside_app");
@@ -137,7 +139,7 @@ export const deliveries = pgTable(
   {
     id: id(),
     clubId: clubId(),
-    kind: text("kind").$type<"notice" | "weekly" | "signin">().notNull(),
+    kind: text("kind").$type<"notice" | "weekly" | "signin" | "ride" | "event">().notNull(),
     noticeId: uuid("notice_id").references(() => notices.id, { onDelete: "cascade" }),
     memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }),
     channel: text("channel").notNull(),
@@ -209,6 +211,40 @@ export const documents = pgTable(
   () => [clubRule()],
 );
 
+// Uploaded files (documents, the home page photo). Kept in the database: a
+// club's files are few and small, and backups then cover them too.
+export const files = pgTable(
+  "files",
+  {
+    id: id(),
+    clubId: clubId(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    size: integer("size").notNull(),
+    data: bytea("data").notNull(),
+    membersOnly: boolean("members_only").notNull().default(true),
+    uploadedBy: uuid("uploaded_by").references(() => members.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  () => [clubRule()],
+);
+
+// Officer-edited public pages: about, join, contact, privacy.
+export const clubPages = pgTable(
+  "club_pages",
+  {
+    id: id(),
+    clubId: clubId(),
+    key: text("key").$type<"about" | "join" | "contact" | "privacy" | "home">().notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    photoId: uuid("photo_id").references(() => files.id, { onDelete: "set null" }),
+    updatedBy: uuid("updated_by").references(() => members.id, { onDelete: "set null" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [clubRule(), uniqueIndex("club_pages_key").on(t.clubId, t.key)],
+);
+
 // Who did what, including officers acting for a member.
 export const auditLog = pgTable(
   "audit_log",
@@ -229,3 +265,4 @@ export type Member = typeof members.$inferSelect;
 export type EventRow = typeof events.$inferSelect;
 export type Notice = typeof notices.$inferSelect;
 export type RideOffer = typeof rideOffers.$inferSelect;
+export type ClubPage = typeof clubPages.$inferSelect;

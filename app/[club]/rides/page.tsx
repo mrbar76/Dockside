@@ -6,7 +6,7 @@ import { fmtWhen } from "@/lib/core/time";
 import { getViewer } from "@/lib/core/viewer";
 import { Flash } from "@/components/Flash";
 import { experienceWanted } from "@/components/Lists";
-import { decide, offerSeat, raiseHand, withdrawOffer } from "../actions";
+import { decide, offerSeat, raiseHand, withdrawHand, withdrawOffer } from "../actions";
 
 export const metadata = { title: "Crew and rides" };
 const level = { new: "new to boats", some: "some time on the water", seasoned: "seasoned" } as const;
@@ -33,6 +33,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
       <h1>Crew and rides</h1>
       <p className="lede">Got room aboard? Post it. No boat? Raise a hand. The owner decides who comes.</p>
       <Flash sp={await searchParams} />
+      <h2 className="sr-only">Open seats</h2>
       {offers.length === 0 && <p className="muted">No open seats right now. Be the first to post one.</p>}
       <ul className="rows">
         {offers.map(({ offer, owner, requests, seatsLeft }) => {
@@ -70,7 +71,14 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
                   <form action={withdrawOffer.bind(null, slug, offer.id)}><button className="linkish small">Withdraw this offer</button></form>
                 </div>
               ) : myReq ? (
-                <p><span className="tag">{myReq.req.status === "accepted" ? "You are aboard" : myReq.req.status === "declined" ? "Not this time" : "Your hand is up"}</span></p>
+                <div className="inline">
+                  <span className="tag">{myReq.req.status === "accepted" ? "You are aboard" : myReq.req.status === "declined" ? "Not this time" : "Your hand is up"}</span>
+                  {myReq.req.status !== "declined" && (
+                    <form action={withdrawHand.bind(null, slug, offer.id)}>
+                      <button className="btn sm quiet">{myReq.req.status === "accepted" ? "I can't make it" : "Take back my hand"}</button>
+                    </form>
+                  )}
+                </div>
               ) : seatsLeft > 0 ? (
                 <form className="inline" action={raiseHand.bind(null, slug, offer.id)}>
                   <label className="field" style={{ flex: 1, minWidth: "12rem" }}>

@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { requireClub } from "@/lib/core/clubs";
 import { withClub } from "@/lib/db";
 import { activeMembers, eventById, fullName, signupsFor } from "@/lib/core/data";
-import { fmtDay, fmtTime } from "@/lib/core/time";
+import { fmtDay, fmtTime, toZonedInput } from "@/lib/core/time";
 import { getViewer } from "@/lib/core/viewer";
 import { Flash } from "@/components/Flash";
 import { cancelMySignup, signUpForEvent } from "../../actions";
+import { cancelEvent, restoreEvent, updateEvent } from "../../officer-actions";
 
 export default async function Page({ params, searchParams }: PageProps<"/[club]/calendar/[id]">) {
   const { club: slug, id } = await params;
@@ -64,6 +65,38 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
             {mine && <button className="btn quiet" formAction={cancelMySignup.bind(null, slug, id)}>Cancel my sign-up</button>}
           </div>
         </form>
+      )}
+      {viewer?.isOfficer && (
+        <details className="officer-panel">
+          <summary>Change or cancel this event</summary>
+          <div className="stack">
+            <form className="form stack" action={updateEvent.bind(null, slug, id)}>
+              <h2>Change the details</h2>
+              <label className="field"><span>Name</span><input name="title" required maxLength={90} defaultValue={event.title} /></label>
+              <div className="inline">
+                <label className="field" style={{ flex: 1, minWidth: "13rem" }}><span>Starts</span><input name="startsAt" type="datetime-local" required defaultValue={toZonedInput(event.startsAt, tz)} /></label>
+                <label className="field" style={{ flex: 1, minWidth: "13rem" }}><span>Ends</span><input name="endsAt" type="datetime-local" defaultValue={event.endsAt ? toZonedInput(event.endsAt, tz) : ""} /></label>
+              </div>
+              <label className="field"><span>Where</span><input name="location" maxLength={90} defaultValue={event.location} /></label>
+              <label className="field"><span>Details</span><textarea name="description" maxLength={1500} defaultValue={event.description} /></label>
+              <div className="inline">
+                <label className="check" style={{ flex: 1, minWidth: "12rem" }}><input type="checkbox" name="signup" defaultChecked={event.signup} /><span>Members can sign up</span></label>
+                <label className="field" style={{ width: "10rem" }}><span>Places</span><input name="capacity" type="number" min={1} inputMode="numeric" placeholder="No limit" defaultValue={event.capacity ?? ""} /></label>
+              </div>
+              <button className="btn go">Save changes</button>
+            </form>
+            {event.cancelledAt ? (
+              <form action={restoreEvent.bind(null, slug, id)}><button className="btn">Put the event back on</button></form>
+            ) : (
+              <form className="form stack" action={cancelEvent.bind(null, slug, id)}>
+                <h2>Cancel the event</h2>
+                <label className="field"><span>Why, in a line</span><input name="reason" maxLength={200} placeholder="Small craft advisory. See you next week." /></label>
+                <label className="check"><input type="checkbox" name="tell" defaultChecked /><span>Tell the {signups.length} member{signups.length === 1 ? "" : "s"} who signed up</span></label>
+                <button className="btn danger">Cancel the event</button>
+              </form>
+            )}
+          </div>
+        </details>
       )}
       {viewer && event.signup && (
         <section className="section">
