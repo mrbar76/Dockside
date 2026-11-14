@@ -1,0 +1,46 @@
+/* Skin: chart. Borrowed from a paper nautical chart: buff land, blue shoal
+   water, navy line work, magenta for anything a mariner must not miss, and
+   italic lettering for everything wet. */
+[data-skin="chart"] .masthead { background: var(--wash2); border-bottom: 1px solid var(--ink); box-shadow: 0 4px 0 var(--bg), 0 5px 0 var(--ink); }
+[data-skin="chart"] .tabs { background: var(--bg); }
+@media (min-width: 52rem) { [data-skin="chart"] .tabs { background: var(--wash2); padding-top: 0; margin-top: -1px; border-bottom: 1px solid var(--ink); box-shadow: 0 4px 0 var(--bg), 0 5px 0 var(--ink); } [data-skin="chart"] .masthead { border-bottom: 0; box-shadow: none; } }
+[data-skin="chart"] h1, [data-skin="chart"] h2, [data-skin="chart"] .tide .next, [data-skin="chart"] .masthead .name { font-style: italic; font-weight: 400; letter-spacing: -0.005em; }
+[data-skin="chart"] h3 { font-family: var(--font-body); font-weight: 700; }
+[data-skin="chart"] .club-body a:not(.btn) { color: var(--accent); }
+[data-skin="chart"] .tide { border: 2px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 4px; margin: 5px; }
+[data-skin="chart"] .tide text { font-style: italic; }
+[data-skin="chart"] .event .date { border: 1px solid var(--ink); border-radius: 50% 50% var(--radius) var(--radius) / 38% 38% var(--radius) var(--radius); background: var(--surface); }
+[data-skin="chart"] .event .date b { font-style: italic; }
+[data-skin="chart"] .notice.urgent { border-left: 6px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--bg)); }
+[data-skin="chart"] .notice.urgent h3 { color: var(--accent); font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 1.45rem; }
+[data-skin="chart"] .hero { background: var(--wash); border-bottom: 1px solid var(--ink); margin-top: -1.75rem; padding-top: 3rem; }
+[data-skin="chart"] .hero .place { font-style: italic; font-family: var(--font-display); color: var(--accent); }
+[data-skin="chart"] .form { border-width: 1px; }
+
+/* Skin: signal. Borrowed from code flags: flat yellow, blue and red, heavy
+   black edges, wide letters you can read from the far dock. */
+[data-skin="signal"] .masthead { border-bottom: 4px solid #000; }
+[data-skin="signal"] .masthead .name { font-weight: 800; font-stretch: 125%; font-size: 1.2rem; }
+[data-skin="signal"] h1, [data-skin="signal"] h2 { font-weight: 800; font-stretch: 125%; letter-spacing: -0.02em; }
+[data-skin="signal"] h1 { font-size: clamp(2.4rem, 9vw, 4.6rem); line-height: 0.98; }
+[data-skin="signal"] h3 { font-weight: 700; font-stretch: 112%; }
+[data-skin="signal"] .tabs { border-top-width: 4px; }
+[data-skin="signal"] .tabs a { font-weight: 600; }
+@media (min-width: 52rem) { [data-skin="signal"] .tabs { border-bottom: 4px solid #000; padding-top: 0.6rem; } [data-skin="signal"] .masthead { border-bottom: 0; } }
+[data-skin="signal"] .tide { border: 4px solid #000; }
+[data-skin="signal"] .tide .water { fill: var(--brand); stroke: #000; stroke-width: 3; }
+[data-skin="signal"] .tide .next { font-weight: 800; font-stretch: 125%; }
+[data-skin="signal"] .tide text { font-weight: 700; }
+[data-skin="signal"] .rows > li { border-top: 3px solid #000; }
+[data-skin="signal"] .rows > li:last-child { border-bottom: 3px solid #000; }
+[data-skin="signal"] .event .date { background: var(--brand); color: var(--on-brand); border: 3px solid #000; }
+[data-skin="signal"] .event .date b { font-weight: 800; font-stretch: 125%; }
+[data-skin="signal"] .rows > li:nth-child(3n + 2) .event .date { background: var(--wash); color: #000; }
+[data-skin="signal"] .rows > li:nth-child(3n + 3) .event .date { background: var(--accent); color: var(--on-accent); }
+[data-skin="signal"] .notice.urgent { background: var(--accent); color: var(--on-accent); border: 4px solid #000; }
+[data-skin="signal"] .notice.urgent .muted { color: inherit; }
+[data-skin="signal"] .hero { background: var(--wash); border-bottom: 4px solid #000; margin-top: -1.75rem; padding-top: 3rem; }
+[data-skin="signal"] .hero .place { font-weight: 700; }
+[data-skin="signal"] .btn { border-width: 3px; border-color: #000; }
+[data-skin="signal"] .form, [data-skin="signal"] .field input, [data-skin="signal"] .field select, [data-skin="signal"] .field textarea, [data-skin="signal"] .flash { border-width: 3px; }
+[data-skin="signal"] .ride .requests { border: 3px solid #000; }

@@ -1,0 +1,121 @@
+/* Shared structure. Every color, face and corner comes from a club's theme
+   tokens (lib/core/theme.ts). Skin-specific treatments live in skins.css. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-size: 18px; line-height: 1.55; background: #fff; color: #111; font-family: system-ui, sans-serif; }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; }
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.club {
+  min-height: 100dvh; display: flex; flex-direction: column;
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+}
+.club h1, .club h2, .club h3 { font-family: var(--font-display); line-height: 1.12; text-wrap: balance; }
+.club h1 { font-size: clamp(2.1rem, 6.5vw, 3.4rem); }
+.club h2 { font-size: clamp(1.45rem, 4vw, 1.95rem); }
+.club h3 { font-size: 1.2rem; }
+.club a { text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+.club :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.muted { color: var(--muted); }
+.small { font-size: 0.89rem; }
+.wrap { width: 100%; max-width: 46rem; margin-inline: auto; padding-inline: 1.25rem; }
+.wide { max-width: 62rem; }
+main { flex: 1; padding-block: 1.75rem 6.5rem; }
+.stack > * + * { margin-top: var(--gap, 1rem); }
+.section { margin-top: 2.75rem; }
+.section > h2 { margin-bottom: 0.9rem; }
+.lede { font-size: 1.15rem; max-width: 34rem; }
+
+/* Header and tabs */
+.demo-bar { background: var(--ink); color: var(--bg); font-size: 0.83rem; padding: 0.35rem 1.25rem; text-align: center; }
+.masthead { display: flex; align-items: center; gap: 0.8rem; padding: 0.9rem 1.25rem; }
+.masthead .burgee { width: 2.9rem; flex: none; }
+.masthead .name { font-family: var(--font-display); font-size: 1.12rem; line-height: 1.15; text-decoration: none; flex: 1; }
+.masthead .who { font-size: 0.95rem; white-space: nowrap; }
+.tabs { position: fixed; inset: auto 0 0 0; z-index: 5; display: flex; background: var(--surface); border-top: 2px solid var(--ink); padding-bottom: env(safe-area-inset-bottom); }
+.tabs a { flex: 1; text-align: center; padding: 0.8rem 0.2rem 0.75rem; font-size: 0.86rem; text-decoration: none; border-top: 4px solid transparent; margin-top: -2px; }
+.tabs a[aria-current="page"] { border-top-color: var(--accent); font-weight: 700; }
+@media (min-width: 52rem) {
+  .tabs { position: static; border-top: 0; background: none; padding: 0 1.25rem 0.6rem; gap: 1.6rem; }
+  .tabs a { flex: none; font-size: 1rem; padding: 0.2rem 0 0.35rem; border-top: 0; border-bottom: 3px solid transparent; margin: 0; }
+  .tabs a[aria-current="page"] { border-bottom-color: var(--accent); }
+  main { padding-bottom: 3rem; }
+}
+.foot { padding: 1.5rem 1.25rem 6rem; font-size: 0.89rem; color: var(--muted); border-top: 1px solid var(--line); }
+@media (min-width: 52rem) { .foot { padding-bottom: 2rem; } }
+
+/* Controls */
+.btn { display: inline-block; padding: 0.7rem 1.15rem; min-height: 3rem; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--ink); color: var(--bg); font-weight: 700; text-decoration: none; cursor: pointer; }
+.btn.quiet { background: transparent; color: var(--ink); }
+.btn.go { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.sm { min-height: 2.4rem; padding: 0.35rem 0.8rem; font-size: 0.92rem; }
+.linkish { background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.field { display: block; }
+.field > span { display: block; font-weight: 700; margin-bottom: 0.3rem; }
+.field > small { display: block; color: var(--muted); margin-top: 0.25rem; }
+.field input, .field select, .field textarea { width: 100%; padding: 0.7rem 0.8rem; min-height: 3rem; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--surface); }
+.field textarea { min-height: 7rem; resize: vertical; }
+.check { display: flex; gap: 0.7rem; align-items: flex-start; }
+.check input { width: 1.4rem; height: 1.4rem; margin-top: 0.15rem; accent-color: var(--accent); flex: none; }
+.form { --gap: 1.1rem; padding: 1.25rem; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--surface); }
+.inline { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end; }
+.flash { padding: 0.8rem 1rem; border: 2px solid var(--ink); border-radius: var(--radius); font-weight: 700; background: var(--wash); }
+.flash.bad { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.tag { display: inline-block; padding: 0.05rem 0.5rem; border: 1.5px solid currentColor; border-radius: 99px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+
+/* Lists */
+.rows > li { padding: 1rem 0; border-top: 1px solid var(--line); }
+.rows > li:last-child { border-bottom: 1px solid var(--line); }
+.event { display: grid; grid-template-columns: 4.1rem 1fr; gap: 1rem; align-items: start; text-decoration: none; }
+.event .date { text-align: center; line-height: 1.05; padding: 0.45rem 0.2rem; }
+.event .date b { display: block; font-family: var(--font-display); font-size: 1.9rem; font-weight: 400; }
+.event .date span { font-size: 0.86rem; }
+.event h3 { margin-bottom: 0.15rem; }
+.event .meta { color: var(--muted); font-size: 0.95rem; }
+.notice h3 { margin-bottom: 0.3rem; }
+.notice.urgent { padding: 1rem 1.1rem; }
+.ride .top { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; flex-wrap: wrap; }
+.ride .requests { margin-top: 0.8rem; padding: 0.75rem 0.9rem; background: var(--wash2); border-radius: var(--radius); }
+.ride .requests li { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; flex-wrap: wrap; padding: 0.35rem 0; }
+.people { width: 100%; border-collapse: collapse; }
+.people th, .people td { text-align: left; padding: 0.65rem 0.6rem 0.65rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.people th { font-size: 0.86rem; color: var(--muted); font-weight: 700; }
+.scroll { overflow-x: auto; }
+
+/* Tide panel */
+.tide { padding: 1.25rem 1.25rem 0.75rem; background: var(--wash); border-radius: var(--radius); }
+.tide .next { font-family: var(--font-display); font-size: clamp(1.5rem, 5vw, 2.3rem); line-height: 1.1; }
+.tide svg { width: 100%; height: auto; margin-top: 0.75rem; overflow: visible; }
+.tide .water { fill: color-mix(in srgb, var(--brand) 22%, transparent); stroke: var(--brand); stroke-width: 2; }
+.tide .now { stroke: var(--accent); stroke-width: 2; }
+.tide text { font-family: var(--font-display); font-size: 15px; fill: var(--ink); }
+.tide .later { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; margin-top: 0.5rem; font-size: 0.95rem; }
+
+/* Home */
+.hero { padding-block: 2.2rem 2rem; }
+.hero .place { margin-bottom: 0.6rem; }
+.hero .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.5rem; }
+.cols { display: grid; gap: 2rem; }
+@media (min-width: 52rem) { .cols { grid-template-columns: 1.15fr 1fr; align-items: start; } }
+
+/* Printed weekly sheet */
+.sheet { background: #fff; color: #000; }
+.sheet .qr { width: 9.5rem; }
+.sheet .qr svg { width: 100%; height: auto; }
+@media print {
+  .demo-bar, .masthead .who, .tabs, .foot, .no-print { display: none !important; }
+  main { padding: 0; }
+  body { font-size: 12.5pt; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.tabs .wide-only { display: none; }
+@media (min-width: 52rem) { .tabs .wide-only { display: block; } }
+.choices { --gap: 0.6rem; }
+.choice { display: flex; gap: 0.8rem; padding: 0.85rem 1rem; border: 2px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--ink); background: var(--wash); }
+.choice input { width: 1.3rem; height: 1.3rem; margin-top: 0.2rem; accent-color: var(--accent); flex: none; }
+.choice b { display: block; }
+.copy { font-size: 0.86rem; word-break: break-all; padding: 0.6rem 0.75rem; background: var(--wash2); border-radius: var(--radius); }
