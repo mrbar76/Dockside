@@ -1,21 +1,84 @@
-/* Skin: chart. Borrowed from a paper nautical chart: buff land, blue shoal
-   water, navy line work, magenta for anything a mariner must not miss, and
-   italic lettering for everything wet. */
-[data-skin="chart"] .masthead { background: var(--wash2); border-bottom: 1px solid var(--ink); box-shadow: 0 4px 0 var(--bg), 0 5px 0 var(--ink); }
+/* Skin: chart. The club's own water drawn as a paper chart: buff land, shoal
+   blue, magenta for anything a skipper must not miss, italic lettering for
+   everything wet, and the chart's border scale of alternating minute ticks. */
+[data-skin="chart"] .masthead { background: var(--wash2); }
+[data-skin="chart"] .masthead .name { font-style: italic; font-size: 1.2rem; }
+[data-skin="chart"] .masthead .pos { color: var(--ink); letter-spacing: 0.02em; }
+[data-skin="chart"] .neatline { display: block; height: 9px; border: 1px solid var(--ink); border-width: 1px 0;
+  background: repeating-linear-gradient(90deg, var(--ink) 0 22px, var(--surface) 22px 44px); }
 [data-skin="chart"] .tabs { background: var(--bg); }
-@media (min-width: 52rem) { [data-skin="chart"] .tabs { background: var(--wash2); padding-top: 0; margin-top: -1px; border-bottom: 1px solid var(--ink); box-shadow: 0 4px 0 var(--bg), 0 5px 0 var(--ink); } [data-skin="chart"] .masthead { border-bottom: 0; box-shadow: none; } }
-[data-skin="chart"] h1, [data-skin="chart"] h2, [data-skin="chart"] .tide .next, [data-skin="chart"] .masthead .name { font-style: italic; font-weight: 400; letter-spacing: -0.005em; }
+@media (min-width: 52rem) { [data-skin="chart"] .tabs { padding-top: 0.7rem; border-bottom: 1px solid var(--line); } }
+[data-skin="chart"] h1, [data-skin="chart"] h2, [data-skin="chart"] .tide .next { font-style: italic; font-weight: 400; letter-spacing: -0.005em; }
 [data-skin="chart"] h3 { font-family: var(--font-body); font-weight: 700; }
 [data-skin="chart"] .club-body a:not(.btn) { color: var(--accent); }
-[data-skin="chart"] .tide { border: 2px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 4px; margin: 5px; }
+[data-skin="chart"] .tide { background: var(--wash); border: 1px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 4px; margin: 5px; }
+[data-skin="chart"] .tide .water { fill: color-mix(in srgb, var(--brand) 18%, transparent); stroke: var(--brand); }
 [data-skin="chart"] .tide text { font-style: italic; }
-[data-skin="chart"] .event .date { border: 1px solid var(--ink); border-radius: 50% 50% var(--radius) var(--radius) / 38% 38% var(--radius) var(--radius); background: var(--surface); }
+[data-skin="chart"] .event .date { border: 1px solid var(--ink); background: var(--surface); }
 [data-skin="chart"] .event .date b { font-style: italic; }
-[data-skin="chart"] .notice.urgent { border-left: 6px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--bg)); }
+[data-skin="chart"] .notice.urgent { border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg)); }
 [data-skin="chart"] .notice.urgent h3 { color: var(--accent); font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 1.45rem; }
 [data-skin="chart"] .hero { background: var(--wash); border-bottom: 1px solid var(--ink); margin-top: -1.75rem; padding-top: 3rem; }
 [data-skin="chart"] .hero .place { font-style: italic; font-family: var(--font-display); color: var(--accent); }
 [data-skin="chart"] .form { border-width: 1px; }
+[data-skin="chart"] .tag { border-style: dashed; }
+
+/* Skin: burgee. The club's own blue and yellow at full strength, the name in
+   a heavy friendly serif, and the club's initials flown in code flags. */
+[data-skin="burgee"] .masthead { background: var(--brand); color: var(--on-brand); }
+[data-skin="burgee"] .masthead a, [data-skin="burgee"] .masthead .pos { color: var(--on-brand); }
+[data-skin="burgee"] .masthead .pos { opacity: 0.85; }
+[data-skin="burgee"] .masthead .name { font-size: 1.22rem; }
+[data-skin="burgee"] .masthead .burgee { background: #fff; border-radius: 6px; padding: 3px 4px; width: 3.3rem; }
+[data-skin="burgee"] .hoist { background: var(--surface); color: var(--muted); border-bottom: 4px solid #F8D50D; }
+[data-skin="burgee"] .tabs { border-top-color: var(--brand); }
+[data-skin="burgee"] .tabs a[aria-current="page"] { border-top-color: #F8D50D; color: var(--brand); }
+@media (min-width: 52rem) { [data-skin="burgee"] .tabs { padding-top: 0.6rem; } [data-skin="burgee"] .tabs a[aria-current="page"] { border-bottom-color: #F8D50D; border-bottom-width: 4px; } }
+[data-skin="burgee"] h1, [data-skin="burgee"] h2, [data-skin="burgee"] .tide .next { font-weight: 400; color: var(--brand); letter-spacing: -0.01em; }
+[data-skin="burgee"] h3 { font-weight: 700; }
+[data-skin="burgee"] .club-body a:not(.btn) { color: var(--brand); }
+[data-skin="burgee"] .event .date { background: var(--brand); color: var(--on-brand); border-radius: var(--radius); }
+[data-skin="burgee"] .event .date b { font-family: var(--font-display); }
+[data-skin="burgee"] .notice.urgent { background: #F8D50D; border-radius: var(--radius); }
+[data-skin="burgee"] .notice.urgent h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; }
+[data-skin="burgee"] .tide { background: var(--wash2); }
+[data-skin="burgee"] .tide .water { fill: var(--brand); stroke: var(--brand); }
+[data-skin="burgee"] .tide .now { stroke: #C8102E; }
+[data-skin="burgee"] .btn { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+[data-skin="burgee"] .btn.quiet { background: transparent; color: var(--brand); }
+[data-skin="burgee"] .btn.go { background: #F8D50D; border-color: #F8D50D; color: var(--ink); }
+[data-skin="burgee"] .hero { background: var(--wash2); margin-top: -1.75rem; padding-top: 3rem; border-bottom: 4px solid #F8D50D; }
+[data-skin="burgee"] .tag { background: var(--wash); border-color: var(--ink); }
+
+/* Skin: log. The week as a ship's log: pale blue ruling, a red margin rule,
+   times and positions typed in, urgent entries run over with a yellow marker. */
+[data-skin="log"] .masthead { border-bottom: 4px double var(--ink); }
+[data-skin="log"] .masthead .name { font-weight: 700; font-size: 1.2rem; }
+[data-skin="log"] .masthead .pos { font-family: var(--font-mono); color: var(--ink); }
+[data-skin="log"] .masthead .pos::before { content: "Position "; }
+[data-skin="log"] .tabs { background: var(--bg); }
+[data-skin="log"] .tabs a[aria-current="page"] { border-top-color: var(--accent); }
+@media (min-width: 52rem) { [data-skin="log"] .tabs { padding-top: 0.6rem; border-bottom: 1px solid var(--line); } }
+[data-skin="log"] .club-body > .wrap { border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+[data-skin="log"] h1, [data-skin="log"] h2 { font-weight: 700; }
+[data-skin="log"] h3 { font-family: var(--font-body); font-weight: 700; }
+[data-skin="log"] .rows > li { border-top: 1px solid var(--line); }
+[data-skin="log"] .rows > li:last-child { border-bottom: 1px solid var(--line); }
+[data-skin="log"] .event { grid-template-columns: 4.6rem 1fr; }
+[data-skin="log"] .event .date { font-family: var(--font-mono); text-align: left; padding: 0.1rem 0.6rem 0.1rem 0; border-right: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); }
+[data-skin="log"] .event .date b { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; }
+[data-skin="log"] .event .meta, [data-skin="log"] .ride .meta { font-family: var(--font-mono); font-size: 0.92rem; }
+[data-skin="log"] .notice.urgent { border-left: 4px solid var(--accent); padding: 0.6rem 0.9rem; }
+[data-skin="log"] .notice.urgent h3 { display: inline; background: linear-gradient(transparent 45%, var(--wash) 45%); padding: 0 0.15rem; font-size: 1.25rem; }
+[data-skin="log"] .notice.urgent p { margin-top: 0.4rem; }
+[data-skin="log"] .tide { background: var(--surface); border: 1px solid var(--line); border-top: 4px double var(--ink); }
+[data-skin="log"] .tide .next { font-family: var(--font-mono); font-weight: 700; font-size: clamp(1.25rem, 4.5vw, 1.8rem); }
+[data-skin="log"] .tide text, [data-skin="log"] .tide .later { font-family: var(--font-mono); }
+[data-skin="log"] .tide .water { fill: color-mix(in srgb, var(--brand) 12%, transparent); stroke: var(--ink); stroke-width: 1.5; }
+[data-skin="log"] .btn { border-width: 2px; }
+[data-skin="log"] .hero { margin-top: -1.75rem; padding-top: 3rem; border-bottom: 4px double var(--ink); }
+[data-skin="log"] .hero .place { font-family: var(--font-mono); }
+[data-skin="log"] .tag { border-radius: 0; font-family: var(--font-mono); font-weight: 400; }
 
 /* Skin: signal. Borrowed from code flags: flat yellow, blue and red, heavy
    black edges, wide letters you can read from the far dock. */
@@ -44,3 +107,5 @@
 [data-skin="signal"] .btn { border-width: 3px; border-color: #000; }
 [data-skin="signal"] .form, [data-skin="signal"] .field input, [data-skin="signal"] .field select, [data-skin="signal"] .field textarea, [data-skin="signal"] .flash { border-width: 3px; }
 [data-skin="signal"] .ride .requests { border: 3px solid #000; }
+/* Chart: magenta stays reserved for warnings, so event rows read in chart ink. */
+[data-skin="chart"] .club-body a.event { color: var(--ink); }

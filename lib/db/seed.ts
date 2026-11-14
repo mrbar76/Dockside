@@ -4,17 +4,8 @@ import { sql } from "drizzle-orm";
 import { db, pool } from "./index";
 import * as s from "./schema";
 import type { Theme } from "../core/theme";
+import { LOOKS } from "../core/looks";
 
-const chart: Theme = {
-  skin: "chart",
-  colors: {
-    bg: "#FBFCFA", surface: "#FFFFFF", ink: "#12324A", muted: "#4E6878", line: "#9DB8C6",
-    brand: "#12324A", onBrand: "#FBFCFA", accent: "#A62B66", onAccent: "#FFFFFF", wash: "#D5E6EE", wash2: "#EFE2B0",
-  },
-  fonts: { display: "'Libre Caslon Text', Georgia, serif", body: "'Atkinson Hyperlegible Next Variable', system-ui, sans-serif" },
-  radius: "3px",
-  burgee: ["#12324A", "#FBFCFA", "#A62B66"],
-};
 
 const signal: Theme = {
   skin: "signal",
@@ -69,7 +60,7 @@ async function main() {
       slug: "mrbyc", name: "Mianus River Boat & Yacht Club", shortName: "MRBYC",
       tagline: "A working boat club on the Mianus River in Cos Cob.",
       about: "Members run this club themselves. They keep the docks, haul the boats and cook the chili. This page is a demonstration with made-up people and events.",
-      theme: chart, settings: { place: "Cos Cob Harbor, Connecticut", noaaStation: "8469549", contactEmail: "hello@example.com", demo: true },
+      theme: LOOKS.mrbyc[0].theme, settings: { place: "Cos Cob Harbor, Connecticut", noaaStation: "8469549", contactEmail: "hello@example.com", demo: true },
     },
     [
       { first: "Ada", last: "Brennan", role: "officer", title: "Fleet Captain", boat: "Petrel", type: "sail", exp: "seasoned" },
