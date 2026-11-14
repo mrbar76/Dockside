@@ -71,6 +71,19 @@ export async function verifyCode(slug: string, f: FormData) {
   redirect(safeNext(slug, next));
 }
 
+// Demo only: one tap signs in as a made-up member, no email or code. Refused
+// unless the site runs in demo mode and the club is marked as a demo club.
+export async function demoEnter(slug: string, memberId: string) {
+  const club = await requireClub(slug);
+  if (process.env.DEMO_MODE !== "true" || !club.settings.demo) redirect(`/${slug}/sign-in`);
+  const [m] = await withClub(club.id, (tx) => tx.select().from(members).where(and(eq(members.id, memberId), eq(members.active, true))).limit(1));
+  if (!m) to(`/${slug}/sign-in`, "error", "That demo member is not on the roster any more.");
+  const otp = await auth.api.createVerificationOTP({ body: { email: m.email, type: "sign-in" } });
+  await auth.api.signInEmailOTP({ body: { email: m.email, otp }, headers: await headers() });
+  (await cookies()).set(`profile_${club.id}`, m.id, { maxAge: 60 * 60 * 24 * 365, httpOnly: true, sameSite: "lax", path: "/" });
+  redirect(`/${slug}/this-week`);
+}
+
 export async function signOut(slug: string) {
   await auth.api.signOut({ headers: await headers() });
   redirect(`/${slug}`);
