@@ -68,6 +68,15 @@ npm run build && npm start
 node scripts/e2e.mjs        # 28 browser checks against the running app, saves screenshots to shots/
 ```
 
+## Hosting during development: Vercel and Neon
+
+1. Vercel project linked to this repo, build command `npm run build:deploy`.
+2. In the Vercel project: Storage, Create Database, Neon, free plan, connect to this project. That adds `DATABASE_URL`.
+3. Variables: `BETTER_AUTH_SECRET` and `DEMO_MODE=true`. The site address is worked out from Vercel's own variables.
+4. Deploy. `scripts/predeploy.mjs` runs the migrations and loads the demo clubs into an empty database.
+
+Demo mode shows sign-in codes on screen. Never load real members into a demo-mode site.
+
 ## Deploying on Railway (outline, not yet done)
 
 1. New project, add a Postgres service, add this repo as a web service.

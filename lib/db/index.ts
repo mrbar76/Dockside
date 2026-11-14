@@ -6,7 +6,7 @@ import * as authSchema from "./auth-schema";
 
 const g = globalThis as unknown as { __docksidePool?: Pool };
 export const pool =
-  g.__docksidePool ?? (g.__docksidePool = new Pool({ connectionString: process.env.DATABASE_URL, max: 10 }));
+  g.__docksidePool ?? (g.__docksidePool = new Pool({ connectionString: process.env.DATABASE_URL, max: process.env.VERCEL ? 3 : 10 }));
 
 // Unscoped connection. Use only for the club list, sign-in tables, migrations
 // and the few cross-club jobs in lib/core/system.ts.
