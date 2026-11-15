@@ -26,6 +26,13 @@ export type ClubSettings = {
   vhf?: string; // radio channel the club monitors, e.g. "VHF 9"
   address?: string;
   contactEmail?: string;
+  // Membership: what the paper form asks for, kept as data so each club differs.
+  fees?: { initiation: number; dues: number; payTo?: string; mailTo?: string };
+  committees?: string[];
+  residency?: string; // e.g. "the Town of Greenwich"
+  sponsorRequired?: boolean;
+  proofsRequired?: number;
+  slipNote?: string; // e.g. the dock wait list is kept by the town, not the club
   demo?: boolean;
 };
 

@@ -4,11 +4,11 @@ import { getTableColumns } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Tx } from "../db";
 import {
-  alertSubscriptions, auditLog, clubPages, deliveries, documents, eventSignups, events, files, groupMembers, groups,
+  alertSubscriptions, applications, auditLog, clubPages, deliveries, documents, eventSignups, events, files, groupMembers, groups,
   households, members, notices, rideOffers, rideRequests,
 } from "../db/schema";
 
-const SECRET = new Set(["linkToken", "feedToken", "data", "endpoint", "p256dh", "auth", "clubId"]);
+const SECRET = new Set(["linkToken", "feedToken", "statusToken", "data", "endpoint", "p256dh", "auth", "clubId"]);
 
 export const TABLES: Record<string, { table: PgTable; label: string }> = {
   members: { table: members, label: "Members" },
@@ -21,6 +21,7 @@ export const TABLES: Record<string, { table: PgTable; label: string }> = {
   deliveries: { table: deliveries, label: "Messages sent" },
   "ride-offers": { table: rideOffers, label: "Open seats posted" },
   "ride-requests": { table: rideRequests, label: "Hands raised" },
+  applications: { table: applications, label: "Membership applications" },
   documents: { table: documents, label: "Documents" },
   files: { table: files, label: "Uploaded files (names only)" },
   pages: { table: clubPages, label: "Club pages" },

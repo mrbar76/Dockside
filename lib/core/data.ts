@@ -153,7 +153,7 @@ export async function clubPage(tx: Tx, club: { name: string; about: string; sett
     about: { title: "About the club", body: club.about },
     join: {
       title: "Joining the club",
-      body: `${club.name} is run by its members. New members are proposed, meet the Board, and help with the work that keeps the docks going.\n\nTo start, read the membership application below and send it to the club. An officer will be in touch.`,
+      body: `${club.name} is run by its members. New members are sponsored by a member, approved by the Membership Committee and the Board, voted in by the membership, and help with the work that keeps the docks going.\n\nApply online below. It takes about five minutes, and you can see where your application stands at any time.`,
     },
     contact: {
       title: "Contact",
@@ -165,6 +165,7 @@ export async function clubPage(tx: Tx, club: { name: string; about: string; sett
         `This notice explains what ${club.name} keeps about its members and why. It is a starting draft for the Board to review and adopt.`,
         "What we keep: your name, email address, phone number if you give it, your boat's name and type, which events you sign up for, and seats you offer or ask for on the crew board.",
         "Why: to run the club. To tell you what is happening, keep the member directory, organize events, and help members get out on the water together.",
+        "If you apply to join: the Membership Committee and officers see your application. Proofs of residency are seen only by officers and are deleted as soon as your application is decided.",
         "Who sees it: members who are signed in see the directory, unless you choose to leave it. Officers see the full roster and a log of messages sent. The public sees only events, club-wide news and tides. We do not sell or share member details.",
         "Messages: you choose how the club reaches you on your Me page: email, one weekly text, phone alerts, or nothing. Reply STOP to any text to end texts.",
         "Your choices: you can change what you share at any time on your Me page. To have your details removed, ask an officer.",

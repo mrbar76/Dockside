@@ -32,6 +32,23 @@ if (process.env.DEMO_MODE === "true") {
     await client.query("update documents set url = $1 where id = $2", [`/${d.slug}/files/${f.id}`, d.id]);
   }
   if (stale.length) console.log(`predeploy: gave ${stale.length} demo document(s) a sample file`);
+  // The MRBYC demo follows the club's real application form (revised Jan 2026).
+  const membership = {
+    fees: { initiation: 300, dues: 165, payTo: "MRBYC", mailTo: "MRBYC, Attn: Membership, 98 Strickland Road, Cos Cob, CT 06807" },
+    committees: ["House Committee", "Membership", "Ways & Means", "Pump Out & Marine Facilities", "Social & Entertainment", "Children's Events", "Annual Bluefish Tournament", "Tidewatcher e-newsletter"],
+    residency: "the Town of Greenwich", sponsorRequired: true, proofsRequired: 2,
+    slipNote: "Dock slips have a waiting list kept by the Town, not the club. To get on it, apply in person at the Greenwich Town Hall Recreation Department.",
+    address: "98 Strickland Road, Cos Cob, CT 06807",
+  };
+  const { rowCount } = await client.query(
+    "update clubs set settings = settings || $1::jsonb where slug = 'mrbyc' and (settings->>'demo')::boolean and settings->'fees' is null",
+    [JSON.stringify(membership)],
+  );
+  if (rowCount) {
+    await client.query("update members set title = 'Membership Governor' where title = 'Social Governor' and club_id = (select id from clubs where slug = 'mrbyc')");
+    await client.query("delete from documents where title = 'Membership application' and club_id = (select id from clubs where slug = 'mrbyc')");
+    console.log("predeploy: MRBYC demo now uses the club's real membership rules");
+  }
 }
 await client.end();
 if (rows[0].n === 0 && process.env.DEMO_MODE === "true") {

@@ -244,3 +244,27 @@ describe("v1 gaps: files, pages, export, wind", async () => {
     expect(toZonedInput(d, "America/New_York")).toBe("2026-07-04T18:30");
   });
 });
+
+describe("membership applications", async () => {
+  const { applications } = await import("../lib/db/schema");
+  const { stageOf, membershipRules } = await import("../lib/core/applications");
+  const base = { firstName: "Marco", lastName: "V", email: "m@example.com", statusToken: "tok-" + Math.random().toString(36).slice(2) };
+
+  it("keeps applications inside their own club", async () => {
+    const [a] = await inA((tx) => tx.insert(applications).values(base).returning());
+    expect(await withClub(B.id, (tx) => tx.select().from(applications).where(eq(applications.id, a.id)))).toEqual([]);
+    await inA((tx) => tx.delete(applications).where(eq(applications.id, a.id)));
+  });
+
+  it("tells an applicant what is missing and what comes next", () => {
+    const a = { status: "open", sponsoredAt: null, paidAt: null, committeeAt: null, boardAt: null, voteAt: null } as never;
+    expect(stageOf(a)).toBe("Waiting on your sponsor's sign-off and your check. Next: Membership Committee.");
+    expect(stageOf({ ...(a as object), sponsoredAt: new Date(), paidAt: new Date(), committeeAt: new Date() } as never)).toBe("Next: Board of Governors.");
+    expect(stageOf({ ...(a as object), status: "approved" } as never)).toMatch(/Welcome aboard/);
+  });
+
+  it("asks for proofs only where the club has a residency rule", () => {
+    expect(membershipRules(B).proofsRequired).toBe(0);
+    expect(membershipRules({ ...B, settings: { ...B.settings, residency: "Greenwich" } }).proofsRequired).toBe(2);
+  });
+});

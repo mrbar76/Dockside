@@ -22,6 +22,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
       <Flash sp={await searchParams} />
       <p className="inline">
         <Link className="btn quiet" href={`/${slug}/officers/roster`}>Roster</Link>
+        <Link className="btn quiet" href={`/${slug}/officers/applications`}>Applications</Link>
         <Link className="btn quiet" href={`/${slug}/officers/groups`}>Groups</Link>
         <Link className="btn quiet" href={`/${slug}/officers/site`}>Club pages and data</Link>
         <Link className="btn quiet" href={`/${slug}/officers/sheet`}>Print the weekly sheet</Link>
@@ -65,8 +66,8 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
                 {log.map(({ d, member, notice }) => (
                   <tr key={d.id}>
                     <td className="small">{fmtWhen(d.createdAt, club.timezone)}</td>
-                    <td>{member ? fullName(member) : ""}</td>
-                    <td>{d.kind === "weekly" ? "Weekly message" : d.kind === "signin" ? "Sign-in code" : d.kind === "ride" ? "Crew board" : d.kind === "event" ? "Event change" : notice?.title ?? "Notice"}</td>
+                    <td>{member ? fullName(member) : d.kind === "application" ? "Applicant" : ""}</td>
+                    <td>{d.kind === "weekly" ? "Weekly message" : d.kind === "signin" ? "Sign-in code" : d.kind === "ride" ? "Crew board" : d.kind === "event" ? "Event change" : d.kind === "application" ? (d.detail.match(/"([^"]+)"/)?.[1] ?? "Membership application") : notice?.title ?? "Notice"}</td>
                     <td>{d.channel}</td>
                     <td>{said[d.status]}</td>
                   </tr>

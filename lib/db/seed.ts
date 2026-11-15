@@ -68,11 +68,18 @@ async function main() {
       slug: "mrbyc", name: "Mianus River Boat & Yacht Club", shortName: "MRBYC",
       tagline: "A working boat club on the Mianus River in Cos Cob.",
       about: "Members run this club themselves. They keep the docks, haul the boats and cook the chili. This page is a demonstration with made-up people and events.",
-      theme: LOOKS.mrbyc[0].theme, settings: { place: "Cos Cob Harbor, Connecticut", noaaStation: "8469549", contactEmail: "hello@example.com", demo: true },
+      theme: LOOKS.mrbyc[0].theme, settings: {
+        fees: { initiation: 300, dues: 165, payTo: "MRBYC", mailTo: "MRBYC, Attn: Membership, 98 Strickland Road, Cos Cob, CT 06807" },
+        committees: ["House Committee", "Membership", "Ways & Means", "Pump Out & Marine Facilities", "Social & Entertainment", "Children's Events", "Annual Bluefish Tournament", "Tidewatcher e-newsletter"],
+        residency: "the Town of Greenwich",
+        sponsorRequired: true,
+        proofsRequired: 2,
+        slipNote: "Dock slips have a waiting list kept by the Town, not the club. To get on it, apply in person at the Greenwich Town Hall Recreation Department.",
+        address: "98 Strickland Road, Cos Cob, CT 06807", place: "Cos Cob Harbor, Connecticut", noaaStation: "8469549", contactEmail: "hello@example.com", demo: true },
     },
     [
       { first: "Ada", last: "Brennan", role: "officer", title: "Fleet Captain", boat: "Petrel", type: "sail", exp: "seasoned" },
-      { first: "Elena", last: "Soto", role: "officer", title: "Social Governor", exp: "some", channel: "push" },
+      { first: "Elena", last: "Soto", role: "officer", title: "Membership Governor", exp: "some", channel: "push" },
       { first: "Tom", last: "Okafor", boat: "Second Wind", type: "power", exp: "seasoned", channel: "text", phone: "+12035550142" },
       { first: "June", last: "Hadley", email: "hadleys@example.com", household: "Hadley", boat: "Marigold", type: "sail", exp: "seasoned" },
       { first: "Walt", last: "Hadley", email: "hadleys@example.com", household: "Hadley", exp: "some" },
@@ -118,7 +125,6 @@ async function main() {
         { clubId, offerId: offers[1].id, memberId: m.Nora, note: "Two of us if there's room.", status: "accepted", decidedAt: ago(1) },
       ]);
       await db.insert(s.documents).values([
-        await sampleDoc(clubId, "mrbyc", { title: "Membership application", category: "Join", membersOnly: false }),
         await sampleDoc(clubId, "mrbyc", { title: "Bylaws", category: "Rules" }),
         await sampleDoc(clubId, "mrbyc", { title: "Yard and dock rules", category: "Rules" }),
         await sampleDoc(clubId, "mrbyc", { title: "November Board agenda", category: "Board" }),

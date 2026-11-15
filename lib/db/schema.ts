@@ -139,7 +139,7 @@ export const deliveries = pgTable(
   {
     id: id(),
     clubId: clubId(),
-    kind: text("kind").$type<"notice" | "weekly" | "signin" | "ride" | "event">().notNull(),
+    kind: text("kind").$type<"notice" | "weekly" | "signin" | "ride" | "event" | "application">().notNull(),
     noticeId: uuid("notice_id").references(() => notices.id, { onDelete: "cascade" }),
     memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }),
     channel: text("channel").notNull(),
@@ -223,11 +223,62 @@ export const files = pgTable(
     size: integer("size").notNull(),
     data: bytea("data").notNull(),
     membersOnly: boolean("members_only").notNull().default(true),
+    // Proofs of residency and similar: officers only, deleted once decided.
+    officersOnly: boolean("officers_only").notNull().default(false),
     uploadedBy: uuid("uploaded_by").references(() => members.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   () => [clubRule()],
 );
+
+// A membership application, filled in online. Mirrors the club's paper form:
+// sponsor, committees, residency, fees by check, then three sign-offs
+// (membership committee, board, full membership vote).
+export const applications = pgTable(
+  "applications",
+  {
+    id: id(),
+    clubId: clubId(),
+    status: text("status").$type<"open" | "approved" | "declined" | "withdrawn">().notNull().default("open"),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull().default(""),
+    address: text("address").notNull().default(""),
+    zip: text("zip").notNull().default(""),
+    occupation: text("occupation").notNull().default(""),
+    businessPhone: text("business_phone").notNull().default(""),
+    spouseName: text("spouse_name").notNull().default(""),
+    children: text("children").notNull().default(""),
+    boatName: text("boat_name").notNull().default(""),
+    boatType: text("boat_type").notNull().default(""),
+    boatLength: text("boat_length").notNull().default(""),
+    boatBeam: text("boat_beam").notNull().default(""),
+    sponsorName: text("sponsor_name").notNull().default(""),
+    sponsorPhone: text("sponsor_phone").notNull().default(""),
+    sponsorEmail: text("sponsor_email").notNull().default(""),
+    sponsorId: uuid("sponsor_id").references(() => members.id, { onDelete: "set null" }),
+    sponsoredAt: timestamp("sponsored_at", { withTimezone: true }),
+    sponsorHow: text("sponsor_how").notNull().default(""),
+    interests: jsonb("interests").$type<string[]>().notNull().default([]),
+    interestsOther: text("interests_other").notNull().default(""),
+    residencyCertified: boolean("residency_certified").notNull().default(false),
+    proofIds: jsonb("proof_ids").$type<string[]>().notNull().default([]),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paymentNote: text("payment_note").notNull().default(""),
+    committeeAt: timestamp("committee_at", { withTimezone: true }),
+    boardAt: timestamp("board_at", { withTimezone: true }),
+    voteAt: timestamp("vote_at", { withTimezone: true }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionNote: text("decision_note").notNull().default(""),
+    officerNotes: text("officer_notes").notNull().default(""),
+    memberId: uuid("member_id").references(() => members.id, { onDelete: "set null" }),
+    statusToken: text("status_token").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [clubRule(), uniqueIndex("applications_token_idx").on(t.statusToken), index("applications_status_idx").on(t.clubId, t.status)],
+);
+export type Application = typeof applications.$inferSelect;
 
 // Officer-edited public pages: about, join, contact, privacy.
 export const clubPages = pgTable(
