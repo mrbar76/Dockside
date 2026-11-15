@@ -1,5 +1,6 @@
 // Demo data: two clubs with different looks on the same core. Every person,
 // event and notice here is made up. Dates are set relative to today.
+import { readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { db, pool } from "./index";
 import * as s from "./schema";
@@ -130,6 +131,10 @@ async function main() {
         await sampleDoc(clubId, "mrbyc", { title: "November Board agenda", category: "Board" }),
         await sampleDoc(clubId, "mrbyc", { title: "Winter float storage plan (draft)", category: "Dock committee" }),
       ]);
+      // The club's own sunset photo of the dock, from its current site.
+      const photo = readFileSync(new URL("../../db/demo/mrbyc-dock.jpg", import.meta.url));
+      const [f] = await db.insert(s.files).values({ clubId, name: "mrbyc-dock.jpg", type: "image/jpeg", size: photo.length, data: photo, membersOnly: false }).returning({ id: s.files.id });
+      await db.insert(s.clubPages).values({ clubId, key: "home", title: "Mianus River Boat & Yacht Club", body: "", photoId: f.id });
     },
   );
 

@@ -44,6 +44,24 @@ if (process.env.DEMO_MODE === "true") {
     "update clubs set settings = settings || $1::jsonb where slug = 'mrbyc' and (settings->>'demo')::boolean and settings->'fees' is null",
     [JSON.stringify(membership)],
   );
+  // Give the MRBYC demo the club's own dock photo if no home photo is set.
+  const { rows: noPhoto } = await client.query(
+    "select c.id from clubs c left join club_pages p on p.club_id = c.id and p.key = 'home' where c.slug = 'mrbyc' and (c.settings->>'demo')::boolean and p.photo_id is null",
+  );
+  if (noPhoto.length) {
+    const { readFileSync } = await import("node:fs");
+    const photo = readFileSync(new URL("../db/demo/mrbyc-dock.jpg", import.meta.url));
+    const clubId = noPhoto[0].id;
+    const { rows: [f] } = await client.query(
+      "insert into files (club_id, name, type, size, data, members_only) values ($1, 'mrbyc-dock.jpg', 'image/jpeg', $2, $3, false) returning id",
+      [clubId, photo.length, photo],
+    );
+    await client.query(
+      "insert into club_pages (club_id, key, title, body, photo_id) values ($1, 'home', 'Mianus River Boat & Yacht Club', '', $2) on conflict (club_id, key) do update set photo_id = excluded.photo_id",
+      [clubId, f.id],
+    );
+    console.log("predeploy: MRBYC demo has its dock photo");
+  }
   if (rowCount) {
     await client.query("update members set title = 'Membership Governor' where title = 'Social Governor' and club_id = (select id from clubs where slug = 'mrbyc')");
     await client.query("delete from documents where title = 'Membership application' and club_id = (select id from clubs where slug = 'mrbyc')");
