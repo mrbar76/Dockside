@@ -27,7 +27,8 @@ export type ClubSettings = {
   address?: string;
   contactEmail?: string;
   // Membership: what the paper form asks for, kept as data so each club differs.
-  fees?: { initiation: number; dues: number; payTo?: string; mailTo?: string };
+  fees?: { initiation: number; dues: number; payTo?: string; mailTo?: string; treasurer?: string };
+  duesRule?: { dueMonthDay: string; lateFeePct: number; lapseMonthDay?: string }; // e.g. "03-01", 20, "04-01"
   committees?: string[];
   residency?: string; // e.g. "the Town of Greenwich"
   sponsorRequired?: boolean;

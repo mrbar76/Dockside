@@ -7,9 +7,10 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { withClub } from "@/lib/db";
-import { alertSubscriptions, auditLog, deliveries, events, members, notices, rideOffers, rideRequests } from "@/lib/db/schema";
+import { alertSubscriptions, auditLog, deliveries, eventSignups, events, members, notices, rideOffers, rideRequests } from "@/lib/db/schema";
 import { requireClub } from "@/lib/core/clubs";
 import { getViewer, origin } from "@/lib/core/viewer";
+import { tiersFrom } from "@/lib/core/money";
 import { cancelSignup, decideRequest, newToken, signUp } from "@/lib/core/data";
 import { deliverTo, sendEmail, sendNoticeNow, sendWeekly } from "@/lib/core/deliver";
 import { importRoster } from "@/lib/core/roster";
@@ -104,16 +105,27 @@ export async function signUpForEvent(slug: string, eventId: string, f: FormData)
   const forId = str(f, "memberId");
   const memberId = viewer.isOfficer && forId ? forId : me.id; // only officers may act for someone else
   const partySize = Math.min(20, Math.max(1, Number(str(f, "partySize")) || 1));
+  const counts: Record<string, number> = {};
+  for (const [k, v] of f.entries()) if (k.startsWith("count:")) counts[k.slice(6)] = Number(v) || 0;
+  let owed = 0;
   try {
-    await withClub(club.id, (tx) => signUp(tx, { eventId, memberId, partySize, note: str(f, "note").slice(0, 200), enteredBy: me.id }));
+    const r = await withClub(club.id, (tx) => signUp(tx, { eventId, memberId, partySize, counts, note: str(f, "note").slice(0, 200), enteredBy: me.id }));
+    owed = r.paid ? 0 : r.amountCents;
   } catch (e) { to(path, "error", msg(e)); }
   revalidatePath(`/${slug}`, "layout");
-  to(path, "ok", memberId === me.id ? "You are signed up." : "Signed up on their behalf. This is logged under your name.");
+  if (owed > 0 && memberId === me.id) to(`/${slug}/pay/event/${eventId}`, "ok", "You are signed up. One more step: pay for your tickets.");
+  to(path, "ok", memberId === me.id ? "You are signed up." : `Signed up on their behalf. This is logged under your name.${owed ? " They still owe for tickets: record their check below." : ""}`);
 }
 
 export async function cancelMySignup(slug: string, eventId: string) {
   const { club, me } = await member(slug);
-  await withClub(club.id, (tx) => cancelSignup(tx, eventId, me.id));
+  const paid = await withClub(club.id, async (tx) => {
+    const [s] = await tx.select().from(eventSignups).where(and(eq(eventSignups.eventId, eventId), eq(eventSignups.memberId, me.id)));
+    if (s?.paidAt) return true;
+    await cancelSignup(tx, eventId, me.id);
+    return false;
+  });
+  if (paid) to(`/${slug}/calendar/${eventId}`, "error", "You have paid for this one. Ask an officer to cancel it and arrange a refund.");
   to(`/${slug}/calendar/${eventId}`, "ok", "Your sign-up is cancelled.");
 }
 
@@ -129,6 +141,7 @@ export async function postEvent(slug: string, f: FormData) {
     await withClub(club.id, (tx) => tx.insert(events).values({
       title, startsAt, endsAt: end ? zonedToUtc(end, club.timezone) : null, location: str(f, "location"),
       description: str(f, "description"), signup: f.get("signup") === "on", capacity: cap > 0 ? cap : null, createdBy: me.id,
+      prices: tiersFrom(f), rsvpBy: str(f, "rsvpBy") ? zonedToUtc(`${str(f, "rsvpBy")}T23:59`, club.timezone) : null, membersOnly: f.get("membersOnly") === "on",
     }));
   } catch (e) { to(path, "error", msg(e)); }
   revalidatePath(`/${slug}`, "layout");

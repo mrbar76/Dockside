@@ -12,7 +12,7 @@ export default async function Page({ params }: PageProps<"/[club]/calendar">) {
   const viewer = await getViewer(club.id);
   const now = new Date();
   const { list, counts, going } = await withClub(club.id, async (tx) => {
-    const list = await eventsBetween(tx, addDays(now, -0.2), addDays(now, 120));
+    const list = await eventsBetween(tx, addDays(now, -0.2), addDays(now, 380));
     const ids = list.map((e) => e.id);
     return { list, counts: await headcounts(tx, ids), going: viewer ? await mySignupEventIds(tx, viewer.member.id, ids) : new Set<string>() };
   });
@@ -31,7 +31,7 @@ export default async function Page({ params }: PageProps<"/[club]/calendar">) {
           <span className="small muted" style={{ display: "block", marginTop: "0.4rem" }}>Tap once. Club events then show up in your own calendar and keep themselves up to date.</span>
         </p>
       )}
-      {list.length === 0 && <p className="muted">Nothing scheduled in the next four months.</p>}
+      {list.length === 0 && <p className="muted">Nothing scheduled in the next year.</p>}
       {[...months].map(([month, evs]) => (
         <section className="section" key={month}>
           <h2>{month}</h2>

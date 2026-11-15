@@ -69,6 +69,10 @@ if (process.env.DEMO_MODE === "true") {
   }
 }
 await client.end();
+if (process.env.DEMO_MODE === "true") {
+  const { execFileSync } = await import("node:child_process");
+  execFileSync("npx", ["tsx", "lib/db/demo-upgrade.ts"], { stdio: "inherit", env });
+}
 if (rows[0].n === 0 && process.env.DEMO_MODE === "true") {
   console.log("predeploy: empty database in demo mode, loading demo clubs");
   execSync("npx tsx lib/db/seed.ts", { env, stdio: "inherit" });

@@ -4,6 +4,11 @@ import { fullName } from "@/lib/core/data";
 import { origin, requireViewer } from "@/lib/core/viewer";
 import { AlertsButton } from "@/components/AlertsButton";
 import { Flash } from "@/components/Flash";
+import { and, desc, eq, gte, inArray, isNull, gt } from "drizzle-orm";
+import { withClub } from "@/lib/db";
+import { dues, eventSignups, events, members } from "@/lib/db/schema";
+import { duesNow, fmtCents } from "@/lib/core/money";
+import { fmtDay } from "@/lib/core/time";
 import { chooseProfile, forgetAlerts, resetLinks, saveChannel, saveProfile, signOut } from "../actions";
 
 export const metadata = { title: "Me" };
@@ -21,10 +26,39 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
   const { member: me, profiles, isOfficer } = await requireViewer(club, `/${slug}/me`);
   const base = await origin();
   const feed = `${base.replace(/^https?:/, "webcal:")}/${slug}/cal/${me.feedToken}`;
+  // Dues are billed per household, so show the household's bill to everyone in it.
+  const { bill, owing } = await withClub(club.id, async (tx) => {
+    const ids = me.householdId ? (await tx.select({ id: members.id }).from(members).where(eq(members.householdId, me.householdId))).map((r) => r.id) : [me.id];
+    const [bill] = await tx.select().from(dues).where(inArray(dues.memberId, ids)).orderBy(desc(dues.year)).limit(1);
+    const owing = await tx.select({ s: eventSignups, e: events }).from(eventSignups).innerJoin(events, eq(events.id, eventSignups.eventId))
+      .where(and(eq(eventSignups.memberId, me.id), isNull(eventSignups.paidAt), gt(eventSignups.amountCents, 0), gte(events.startsAt, new Date())));
+    return { bill, owing };
+  });
+  const billNow = bill ? duesNow(bill) : null;
   return (
     <div className="wrap stack" style={{ "--gap": "1.25rem" } as React.CSSProperties}>
       <h1>{fullName(me)}</h1>
       <Flash sp={await searchParams} />
+      {(bill || owing.length > 0) && (
+        <section className="form stack">
+          <h2>Payments</h2>
+          {bill && billNow && (
+            <p className="inline" style={{ justifyContent: "space-between" }}>
+              <span>
+                <b>{bill.year} dues</b>{" "}
+                {bill.paidAt ? <>paid {fmtDay(bill.paidAt, club.timezone)}. Thank you.</> : <>{fmtCents(billNow.owed)}, {billNow.late ? <b>past due</b> : <>due {fmtDay(bill.dueOn, club.timezone)}</>}.{bill.lateFeePct && !billNow.late ? ` ${bill.lateFeePct}% late fee after that.` : ""}</>}
+              </span>
+              {!bill.paidAt && <Link className="btn go" href={`/${slug}/pay/dues/${bill.id}`}>Pay dues</Link>}
+            </p>
+          )}
+          {owing.map(({ s, e }) => (
+            <p key={s.id} className="inline" style={{ justifyContent: "space-between" }}>
+              <span><b>{e.title}</b> tickets, {fmtCents(s.amountCents)}</span>
+              <Link className="btn quiet" href={`/${slug}/pay/event/${e.id}`}>Pay</Link>
+            </p>
+          ))}
+        </section>
+      )}
       {profiles.length > 1 && (
         <form className="form stack" action={chooseProfile.bind(null, slug)}>
           <h2>Who is using this phone?</h2>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TicketFields } from "@/components/TicketFields";
 import { requireClub } from "@/lib/core/clubs";
 import { withClub } from "@/lib/db";
 import { fullName, listGroups, recentDeliveries } from "@/lib/core/data";
@@ -22,6 +23,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
       <Flash sp={await searchParams} />
       <p className="inline">
         <Link className="btn quiet" href={`/${slug}/officers/roster`}>Roster</Link>
+        <Link className="btn quiet" href={`/${slug}/officers/money`}>Money</Link>
         <Link className="btn quiet" href={`/${slug}/officers/applications`}>Applications</Link>
         <Link className="btn quiet" href={`/${slug}/officers/groups`}>Groups</Link>
         <Link className="btn quiet" href={`/${slug}/officers/site`}>Club pages and data</Link>
@@ -53,6 +55,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
           <label className="check" style={{ flex: 1, minWidth: "12rem" }}><input type="checkbox" name="signup" defaultChecked /><span>Members can sign up</span></label>
           <label className="field" style={{ width: "10rem" }}><span>Places</span><input name="capacity" type="number" min={1} inputMode="numeric" placeholder="No limit" /></label>
         </div>
+        <TicketFields />
         <button className="btn go">Add event</button>
       </form>
       <section className="section">

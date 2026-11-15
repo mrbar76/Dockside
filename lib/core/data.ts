@@ -1,5 +1,6 @@
 // Reads and writes for club data. Every function takes the scoped transaction
 // from withClub, so none of them can reach another club.
+import { headcount, ticketTotal } from "./money";
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { Tx } from "../db";
@@ -48,19 +49,26 @@ export async function mySignupEventIds(tx: Tx, memberId: string, eventIds: strin
     .where(and(eq(eventSignups.memberId, memberId), inArray(eventSignups.eventId, eventIds)));
   return new Set(rows.map((r) => r.id));
 }
-export async function signUp(tx: Tx, a: { eventId: string; memberId: string; partySize: number; note: string; enteredBy: string }) {
+export async function signUp(tx: Tx, a: { eventId: string; memberId: string; partySize: number; note: string; enteredBy: string; counts?: Record<string, number> }) {
   const event = await eventById(tx, a.eventId);
   if (!event || event.cancelledAt || !event.signup) throw new Error("Sign-up is closed for this event.");
+  if (event.rsvpBy && new Date() > event.rsvpBy) throw new Error("The sign-up deadline has passed. Ask an officer if there is still room.");
+  const priced = event.prices.length > 0;
+  const counts = priced ? Object.fromEntries(event.prices.map((t) => [t.label, Math.min(20, Math.max(0, Math.floor(a.counts?.[t.label] ?? 0)))])) : {};
+  const partySize = priced ? headcount(counts) : a.partySize;
+  if (partySize < 1) throw new Error("Add at least one person.");
+  const amountCents = priced ? ticketTotal(event.prices, counts) : 0;
+  const [mine] = await tx.select().from(eventSignups).where(and(eq(eventSignups.eventId, event.id), eq(eventSignups.memberId, a.memberId)));
+  if (mine?.paidAt && amountCents !== mine.amountCents) throw new Error("You have already paid. To change numbers, ask an officer.");
   if (event.capacity != null) {
     const taken = (await headcounts(tx, [event.id])).get(event.id) ?? 0;
-    const [mine] = await tx.select().from(eventSignups)
-      .where(and(eq(eventSignups.eventId, event.id), eq(eventSignups.memberId, a.memberId)));
-    if (taken - (mine?.partySize ?? 0) + a.partySize > event.capacity) throw new Error("Not enough places left for that many.");
+    if (taken - (mine?.partySize ?? 0) + partySize > event.capacity) throw new Error("Not enough places left for that many.");
   }
-  await tx.insert(eventSignups).values({ ...a })
-    .onConflictDoUpdate({ target: [eventSignups.eventId, eventSignups.memberId], set: { partySize: a.partySize, note: a.note, enteredBy: a.enteredBy } });
+  await tx.insert(eventSignups).values({ eventId: a.eventId, memberId: a.memberId, partySize, counts, amountCents, note: a.note, enteredBy: a.enteredBy })
+    .onConflictDoUpdate({ target: [eventSignups.eventId, eventSignups.memberId], set: { partySize, counts, amountCents, note: a.note, enteredBy: a.enteredBy } });
   if (a.enteredBy !== a.memberId)
-    await tx.insert(auditLog).values({ actorId: a.enteredBy, onBehalfOf: a.memberId, action: "event.signup", detail: { eventId: a.eventId, partySize: a.partySize } });
+    await tx.insert(auditLog).values({ actorId: a.enteredBy, onBehalfOf: a.memberId, action: "event.signup", detail: { eventId: a.eventId, partySize } });
+  return { amountCents, paid: !!mine?.paidAt };
 }
 export const cancelSignup = (tx: Tx, eventId: string, memberId: string) =>
   tx.delete(eventSignups).where(and(eq(eventSignups.eventId, eventId), eq(eventSignups.memberId, memberId)));
@@ -166,6 +174,7 @@ export async function clubPage(tx: Tx, club: { name: string; about: string; sett
         "What we keep: your name, email address, phone number if you give it, your boat's name and type, which events you sign up for, and seats you offer or ask for on the crew board.",
         "Why: to run the club. To tell you what is happening, keep the member directory, organize events, and help members get out on the water together.",
         "If you apply to join: the Membership Committee and officers see your application. Proofs of residency are seen only by officers and are deleted as soon as your application is decided.",
+        "Payments: dues and tickets paid online are handled by the club's payment processor. The club never sees or keeps your card or bank account number. Officers see who has paid and how.",
         "Who sees it: members who are signed in see the directory, unless you choose to leave it. Officers see the full roster and a log of messages sent. The public sees only events, club-wide news and tides. We do not sell or share member details.",
         "Messages: you choose how the club reaches you on your Me page: email, one weekly text, phone alerts, or nothing. Reply STOP to any text to end texts.",
         "Your choices: you can change what you share at any time on your Me page. To have your details removed, ask an officer.",

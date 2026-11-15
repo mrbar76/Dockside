@@ -6,6 +6,7 @@ import { db, pool } from "./index";
 import * as s from "./schema";
 import type { Theme } from "../core/theme";
 import { LOOKS } from "../core/looks";
+import { addMrbycYear } from "./demo-year";
 
 // A one-page stand-in so every demo document opens. The club uploads the real one.
 async function sampleDoc(clubId: string, slug: string, d: { title: string; category: string; membersOnly?: boolean }) {
@@ -70,7 +71,8 @@ async function main() {
       tagline: "A working boat club on the Mianus River in Cos Cob.",
       about: "Members run this club themselves. They keep the docks, haul the boats and cook the chili. This page is a demonstration with made-up people and events.",
       theme: LOOKS.mrbyc[0].theme, settings: {
-        fees: { initiation: 300, dues: 165, payTo: "MRBYC", mailTo: "MRBYC, Attn: Membership, 98 Strickland Road, Cos Cob, CT 06807" },
+        fees: { initiation: 300, dues: 165, payTo: "MRBYC", mailTo: "MRBYC, Attn: Membership, 98 Strickland Road, Cos Cob, CT 06807", treasurer: "the Treasurer" },
+        duesRule: { dueMonthDay: "03-01", lateFeePct: 20, lapseMonthDay: "04-01" },
         committees: ["House Committee", "Membership", "Ways & Means", "Pump Out & Marine Facilities", "Social & Entertainment", "Children's Events", "Annual Bluefish Tournament", "Tidewatcher e-newsletter"],
         residency: "the Town of Greenwich",
         sponsorRequired: true,
@@ -101,7 +103,6 @@ async function main() {
         { clubId, title: "Chili cook-off", description: "Bring a pot or bring a spoon. Judging at 6:30.", location: "Clubhouse", startsAt: at(2, 17, 30), endsAt: at(2, 20), createdBy: m.Elena },
         { clubId, title: "Board meeting", description: "Open to all members. Agenda on the documents page.", location: "Clubhouse, upstairs", startsAt: at(4, 19), signup: false, createdBy: m.Ada },
         { clubId, title: "Winter cover workshop", description: "Leo shows how he frames and ties a cover that survives February.", location: "Yard, by the travel lift", startsAt: at(6, 10), capacity: 12, createdBy: m.Ada },
-        { clubId, title: "Holiday potluck", description: "Families welcome.", location: "Clubhouse", startsAt: at(22, 17), createdBy: m.Elena },
       ]).returning();
       await db.insert(s.eventSignups).values([
         { clubId, eventId: ev[0].id, memberId: m.Tom, partySize: 1, enteredBy: m.Tom },
@@ -134,6 +135,7 @@ async function main() {
       // The club's own sunset photo of the dock, from its current site.
       const photo = readFileSync(new URL("../../db/demo/mrbyc-dock.jpg", import.meta.url));
       const [f] = await db.insert(s.files).values({ clubId, name: "mrbyc-dock.jpg", type: "image/jpeg", size: photo.length, data: photo, membersOnly: false }).returning({ id: s.files.id });
+      await addMrbycYear(clubId);
       await db.insert(s.clubPages).values({ clubId, key: "home", title: "Mianus River Boat & Yacht Club", body: "", photoId: f.id });
     },
   );

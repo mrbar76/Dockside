@@ -1,0 +1,21 @@
+{
+  "note": "MRBYC's yearly calendar as posted on the club's Facebook page in 2025-26, moved to likely 2026-27 dates for the demo. Dates are guesses until the club confirms.",
+  "events": [
+    { "title": "Members meeting and Election Night", "start": "2026-12-07T19:00", "location": "Clubhouse", "description": "Come vote for the candidates proposed by the Nominating Committee. Bring your Baskets of Cheer donation.", "signup": false },
+    { "title": "Toys for Tots drop-off closes", "start": "2026-12-12T12:00", "location": "Bin inside the clubhouse", "description": "Bring unwrapped toys, or a check made out to Toys for Tots. Questions: ask KO or Hoagie.", "signup": false },
+    { "title": "Holiday Party", "start": "2026-12-12T18:00", "end": "2026-12-12T22:00", "location": "Clubhouse", "description": "Bring an item for the Baskets of Cheer raffle. Questions: Lisa Tella.", "signup": true },
+    { "title": "Members meeting", "start": "2027-01-04T19:00", "location": "Clubhouse", "description": "First Monday of the month. All members welcome.", "signup": false },
+    { "title": "Members meeting", "start": "2027-02-01T19:00", "location": "Clubhouse", "description": "First Monday of the month. All members welcome.", "signup": false },
+    { "title": "Commodore's Brunch", "start": "2027-03-07T11:30", "end": "2027-03-07T14:00", "location": "Clubhouse", "description": "You are cordially invited. Limited to the first 75 people.", "signup": true, "capacity": 75, "membersOnly": true, "rsvpBy": "2027-02-28", "prices": [{ "label": "Adult", "cents": 4000 }, { "label": "Child 12 and under", "cents": 0 }] },
+    { "title": "Members meeting", "start": "2027-03-01T19:00", "location": "Clubhouse", "description": "First Monday of the month. Dues are due today.", "signup": false },
+    { "title": "Slipholders' meeting", "start": "2027-03-24T19:00", "location": "Clubhouse", "description": "For members with a slip.", "signup": false },
+    { "title": "Ladies Night: Drinks on Deck", "start": "2027-04-29T18:00", "end": "2027-04-29T20:00", "location": "The deck, rain or shine", "description": "Wine, beer, prosecco and lemonade, heavy hors d'oeuvres.", "signup": true },
+    { "title": "Hot Dog, It's Friday!", "start": "2027-05-07T18:00", "end": "2027-05-07T21:00", "location": "Clubhouse", "description": "Summer's almost here. BYOB. Hot dogs and chips for purchase.", "signup": false },
+    { "title": "44th Commissioning Day", "start": "2027-06-05T16:30", "location": "Clubhouse and docks", "description": "Ceremony at 5 sharp, then dinner and drinks with live music. Members and their families. Payment in advance, no walk-ins.", "signup": true, "membersOnly": true, "rsvpBy": "2027-05-28", "prices": [{ "label": "Adult", "cents": 5000 }, { "label": "Child under 12", "cents": 0 }] },
+    { "title": "New Members Meeting", "start": "2027-06-09T19:30", "location": "Clubhouse", "description": "For members who joined this year: meet the Board and learn how the club runs.", "signup": true },
+    { "title": "Deck Party with That's What She Said", "start": "2027-07-16T18:30", "location": "The deck", "description": "Live music. BYOB. Bring a dish to share.", "signup": true },
+    { "title": "Deck Party with Flight Risk", "start": "2027-08-20T19:00", "end": "2027-08-20T22:00", "location": "Club lot", "description": "Our resident band. BYOB. Bring a dish to share.", "signup": true },
+    { "title": "42nd Bluefish Tournament", "start": "2027-09-11T05:00", "end": "2027-09-11T16:00", "location": "Clubhouse", "description": "Richard C. Stewart Memorial. Breakfast and check-in 5 to 8 am, weigh-in 1 pm sharp, then BBQ and awards. Prizes for the heaviest bluefish. Young anglers encouraged.", "signup": true, "prices": [{ "label": "Angler over 12", "cents": 3000 }, { "label": "Non-fishing guest over 12", "cents": 1500 }, { "label": "Child 12 and under", "cents": 0 }] },
+    { "title": "Halloween Pumpkin Party", "start": "2027-10-24T16:00", "end": "2027-10-24T19:00", "location": "Clubhouse", "description": "Carve a pumpkin or just watch the fun. Bring a potluck dish to share. Pumpkins provided, bring your own tools. Costumes encouraged. BYOB.", "signup": true, "prices": [{ "label": "Adult", "cents": 2000 }, { "label": "Child", "cents": 0 }] }
+  ]
+}

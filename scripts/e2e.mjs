@@ -286,6 +286,39 @@ await go(statusPath);
 await check("the applicant's page says welcome", () => has("Welcome aboard"));
 await signOut("mrbyc");
 
+// Money: priced tickets, demo checkout, dues, the Treasurer's page
+await signIn("mrbyc", "priya.raman@example.com");
+await go("/mrbyc/calendar");
+await check("the calendar shows the club's real year", async () => (await has("Commodore's Brunch")) && (await has("Bluefish Tournament")) && (await has("Commissioning Day")));
+await page.evaluate(() => [...document.querySelectorAll("a.event")].find((a) => a.textContent.includes("Commodore's Brunch")).click());
+await until("Sign up by");
+await check("a paid event shows its prices and rules", async () => (await has("$40")) && (await has("Members and their families only")));
+const brunchPath = new URL(page.url()).pathname;
+await page.$eval('input[name="count:Adult"]', (el) => (el.value = "2"));
+await page.$eval('input[name="count:Child 12 and under"]', (el) => (el.value = "1"));
+await page.$eval('input[name="count:Adult"]', (el) => el.form.requestSubmit());
+await check("signing up for a paid event goes straight to checkout", async () => (await until("One more step")) && (await has("$80")));
+await clickText("Pay $80");
+await check("the demo checkout takes the payment", () => until("Paid $80 for Commodore's Brunch"));
+await go(brunchPath);
+await check("the event shows her as paid", () => has("Paid $80"));
+await go("/mrbyc/me");
+await check("Me shows this year's dues", async () => (await has("2027 dues")) && (await has("20% late fee")));
+await clickText("Pay dues");
+await until("Pay $165");
+await page.click('input[value="bank"]');
+await clickText("Pay $165");
+await check("dues paid by bank in the demo", () => until("Paid $165 for 2027 dues"));
+await signOut("mrbyc");
+await signIn("mrbyc", "ada.brennan@example.com");
+await go("/mrbyc/officers/money");
+await check("the Treasurer sees dues, tickets and payments", async () => (await has("2027 dues")) && (await has("Tickets")) && (await has("bank (demo)")) && (await has("still owed")));
+await page.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent === "Check in"); b.closest("form").querySelector('input[name="note"]').value = "1187"; b.click(); });
+await check("the Treasurer checks in a paper check", () => until("Check recorded."));
+await go(brunchPath);
+await check("the officer sees who owes for tickets", async () => (await has("Collected")) && (await has("Owes $80")));
+await signOut("mrbyc");
+
 // Second club, second look, same core
 await go("/harbor-point/this-week");
 await check("second club shows only its own events", async () => (await has("Frostbite series")) && !(await has("Chili cook-off")));

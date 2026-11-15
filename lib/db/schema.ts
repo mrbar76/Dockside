@@ -97,6 +97,10 @@ export const events = pgTable(
     endsAt: timestamp("ends_at", { withTimezone: true }),
     signup: boolean("signup").notNull().default(true),
     capacity: integer("capacity"),
+    // Ticket prices in cents, e.g. [{ label: "Adult", cents: 4000 }, { label: "Child 12 and under", cents: 0 }]. Empty: free.
+    prices: jsonb("prices").$type<{ label: string; cents: number }[]>().notNull().default([]),
+    rsvpBy: timestamp("rsvp_by", { withTimezone: true }),
+    membersOnly: boolean("members_only").notNull().default(false),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     createdBy: uuid("created_by").references(() => members.id, { onDelete: "set null" }),
     createdAt: createdAt(),
@@ -112,6 +116,10 @@ export const eventSignups = pgTable(
     eventId: uuid("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
     memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
     partySize: integer("party_size").notNull().default(1),
+    counts: jsonb("counts").$type<Record<string, number>>().notNull().default({}),
+    amountCents: integer("amount_cents").notNull().default(0),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paidHow: text("paid_how").$type<"card" | "bank" | "check" | "cash">(),
     note: text("note").notNull().default(""),
     enteredBy: uuid("entered_by").references(() => members.id, { onDelete: "set null" }),
     createdAt: createdAt(),
@@ -317,3 +325,48 @@ export type EventRow = typeof events.$inferSelect;
 export type Notice = typeof notices.$inferSelect;
 export type RideOffer = typeof rideOffers.$inferSelect;
 export type ClubPage = typeof clubPages.$inferSelect;
+
+// Yearly dues, one bill per household (or per member with no household).
+export const dues = pgTable(
+  "dues",
+  {
+    id: id(),
+    clubId: clubId(),
+    year: integer("year").notNull(),
+    memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    dueOn: timestamp("due_on", { withTimezone: true }).notNull(),
+    lateFeePct: integer("late_fee_pct").notNull().default(0),
+    lapseOn: timestamp("lapse_on", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paidCents: integer("paid_cents"),
+    paidHow: text("paid_how").$type<"card" | "bank" | "check" | "cash">(),
+    remindedAt: timestamp("reminded_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [clubRule(), uniqueIndex("dues_year_member").on(t.clubId, t.year, t.memberId)],
+);
+export type Dues = typeof dues.$inferSelect;
+
+// Every payment, whatever it was for. In demo mode card and bank payments are
+// pretend and marked demo; nothing reaches a payment processor.
+export const payments = pgTable(
+  "payments",
+  {
+    id: id(),
+    clubId: clubId(),
+    memberId: uuid("member_id").references(() => members.id, { onDelete: "set null" }),
+    kind: text("kind").$type<"event" | "dues">().notNull(),
+    refId: uuid("ref_id").notNull(),
+    description: text("description").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    feeCents: integer("fee_cents").notNull().default(0),
+    method: text("method").$type<"card" | "bank" | "check" | "cash">().notNull(),
+    demo: boolean("demo").notNull().default(false),
+    note: text("note").notNull().default(""),
+    recordedBy: uuid("recorded_by").references(() => members.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [clubRule(), index("payments_created_idx").on(t.clubId, t.createdAt)],
+);
+export type Payment = typeof payments.$inferSelect;

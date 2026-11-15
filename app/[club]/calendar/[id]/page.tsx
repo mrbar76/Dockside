@@ -6,6 +6,9 @@ import { activeMembers, eventById, fullName, signupsFor } from "@/lib/core/data"
 import { fmtDay, fmtTime, toZonedInput } from "@/lib/core/time";
 import { getViewer } from "@/lib/core/viewer";
 import { Flash } from "@/components/Flash";
+import { TicketFields } from "@/components/TicketFields";
+import { fmtCents } from "@/lib/core/money";
+import { recordPayment } from "../../pay-actions";
 import { cancelMySignup, signUpForEvent } from "../../actions";
 import { cancelEvent, restoreEvent, updateEvent } from "../../officer-actions";
 
@@ -23,7 +26,11 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
   const tz = club.timezone;
   const mine = viewer ? signups.find((s) => s.member.id === viewer.member.id) : undefined;
   const total = signups.reduce((n, s) => n + s.signup.partySize, 0);
-  const open = event.signup && !event.cancelledAt && event.startsAt > new Date();
+  const deadlinePassed = !!event.rsvpBy && new Date() > event.rsvpBy;
+  const open = event.signup && !event.cancelledAt && event.startsAt > new Date() && !deadlinePassed;
+  const priced = event.prices.length > 0;
+  const owedTotal = signups.reduce((n, s) => n + s.signup.amountCents, 0);
+  const paidTotal = signups.filter((s) => s.signup.paidAt).reduce((n, s) => n + s.signup.amountCents, 0);
   const here = `/${slug}/calendar/${id}`;
   return (
     <div className="wrap stack">
@@ -34,6 +41,13 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
         {event.location ? `. ${event.location}` : ""}
       </p>
       {event.description && <p>{event.description}</p>}
+      {(priced || event.rsvpBy || event.membersOnly) && (
+        <ul className="ticket-facts">
+          {event.prices.map((t) => <li key={t.label}><b>{t.cents ? fmtCents(t.cents) : "Free"}</b> {t.label}</li>)}
+          {event.rsvpBy && <li>{deadlinePassed ? "Sign-up closed" : `Sign up by ${fmtDay(event.rsvpBy, tz)}`}</li>}
+          {event.membersOnly && <li>Members and their families only</li>}
+        </ul>
+      )}
       <Flash sp={await searchParams} />
       {open && !viewer && <p><Link className="btn" href={`/${slug}/sign-in?next=${encodeURIComponent(here)}`}>Sign in to sign up</Link></p>}
       {open && viewer && (
@@ -50,16 +64,31 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
               <small>Officers can sign up a member who phoned in. It is logged under your name.</small>
             </label>
           )}
-          <div className="inline">
-            <label className="field" style={{ width: "8rem" }}>
-              <span>How many</span>
-              <input name="partySize" type="number" min={1} max={20} defaultValue={mine?.signup.partySize ?? 1} inputMode="numeric" />
-            </label>
-            <label className="field" style={{ flex: 1, minWidth: "12rem" }}>
-              <span>Note for the organizer</span>
-              <input name="note" maxLength={200} defaultValue={mine?.signup.note ?? ""} />
-            </label>
-          </div>
+          {priced ? (
+            <>
+              <div className="inline">
+                {event.prices.map((t) => (
+                  <label className="field" style={{ width: "10rem" }} key={t.label}>
+                    <span>{t.label} <i className="muted">{t.cents ? fmtCents(t.cents) : "free"}</i></span>
+                    <input name={`count:${t.label}`} type="number" min={0} max={20} inputMode="numeric" defaultValue={mine ? (mine.signup.counts[t.label] ?? 0) : t === event.prices[0] ? 1 : 0} />
+                  </label>
+                ))}
+              </div>
+              {mine && <p>{mine.signup.paidAt ? <><b>Paid {fmtCents(mine.signup.amountCents)}</b> by {mine.signup.paidHow}.</> : mine.signup.amountCents > 0 ? <><b>You owe {fmtCents(mine.signup.amountCents)}.</b> <Link href={`/${slug}/pay/event/${id}`}>Pay now</Link></> : null}</p>}
+              <label className="field"><span>Note for the organizer</span><input name="note" maxLength={200} defaultValue={mine?.signup.note ?? ""} /></label>
+            </>
+          ) : (
+            <div className="inline">
+              <label className="field" style={{ width: "8rem" }}>
+                <span>How many</span>
+                <input name="partySize" type="number" min={1} max={20} defaultValue={mine?.signup.partySize ?? 1} inputMode="numeric" />
+              </label>
+              <label className="field" style={{ flex: 1, minWidth: "12rem" }}>
+                <span>Note for the organizer</span>
+                <input name="note" maxLength={200} defaultValue={mine?.signup.note ?? ""} />
+              </label>
+            </div>
+          )}
           <div className="inline">
             <button className="btn go">{mine ? "Save changes" : "Sign up"}</button>
             {mine && <button className="btn quiet" formAction={cancelMySignup.bind(null, slug, id)}>Cancel my sign-up</button>}
@@ -83,6 +112,7 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
                 <label className="check" style={{ flex: 1, minWidth: "12rem" }}><input type="checkbox" name="signup" defaultChecked={event.signup} /><span>Members can sign up</span></label>
                 <label className="field" style={{ width: "10rem" }}><span>Places</span><input name="capacity" type="number" min={1} inputMode="numeric" placeholder="No limit" defaultValue={event.capacity ?? ""} /></label>
               </div>
+              <TicketFields prices={event.prices} rsvpBy={event.rsvpBy ? toZonedInput(event.rsvpBy, tz).slice(0, 10) : ""} membersOnly={event.membersOnly} />
               <button className="btn go">Save changes</button>
             </form>
             {event.cancelledAt ? (
@@ -101,11 +131,27 @@ export default async function Page({ params, searchParams }: PageProps<"/[club]/
       {viewer && event.signup && (
         <section className="section">
           <h2>{total === 0 ? "Nobody has signed up yet" : `${total} going`}</h2>
+          {viewer.isOfficer && priced && total > 0 && (
+            <p className="note">Collected <b>{fmtCents(paidTotal)}</b> of {fmtCents(owedTotal)}. Still owed: {fmtCents(owedTotal - paidTotal)}.</p>
+          )}
           <ul className="rows">
             {signups.map((s) => (
               <li key={s.signup.id}>
-                {fullName(s.member)}{s.signup.partySize > 1 ? `, party of ${s.signup.partySize}` : ""}
+                {fullName(s.member)}
+                {priced ? <span className="muted">. {Object.entries(s.signup.counts).filter(([, n]) => n > 0).map(([l, n]) => `${n} ${l.toLowerCase()}`).join(", ")}</span> : s.signup.partySize > 1 ? `, party of ${s.signup.partySize}` : ""}
                 {s.signup.note && <span className="muted">. {s.signup.note}</span>}
+                {viewer.isOfficer && priced && s.signup.amountCents > 0 && (
+                  s.signup.paidAt
+                    ? <span className="tag">Paid {fmtCents(s.signup.amountCents)} by {s.signup.paidHow}</span>
+                    : (
+                      <form className="inline" action={recordPayment.bind(null, slug, "event", s.signup.id, `calendar/${id}`)} style={{ marginTop: "0.3rem" }}>
+                        <span className="tag warn">Owes {fmtCents(s.signup.amountCents)}</span>
+                        <select name="method" aria-label="Paid by" defaultValue="check"><option value="check">Check</option><option value="cash">Cash</option></select>
+                        <input name="note" placeholder="Check no." aria-label="Check number" style={{ width: "7rem" }} />
+                        <button className="btn sm quiet">Record payment</button>
+                      </form>
+                    )
+                )}
               </li>
             ))}
           </ul>

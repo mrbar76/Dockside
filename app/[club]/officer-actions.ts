@@ -14,6 +14,7 @@ import { getViewer, origin } from "@/lib/core/viewer";
 import { newToken, officerCount } from "@/lib/core/data";
 import { deliverTo } from "@/lib/core/deliver";
 import { fmtWhen, zonedToUtc } from "@/lib/core/time";
+import { tiersFrom } from "@/lib/core/money";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong. Try again.");
@@ -39,6 +40,8 @@ function eventFields(f: FormData, tz: string) {
     title, startsAt: zonedToUtc(str(f, "startsAt"), tz), endsAt: end ? zonedToUtc(end, tz) : null,
     location: str(f, "location"), description: str(f, "description"), signup: f.get("signup") === "on",
     capacity: cap > 0 ? cap : null,
+    prices: tiersFrom(f), rsvpBy: str(f, "rsvpBy") ? zonedToUtc(`${str(f, "rsvpBy")}T23:59`, tz) : null,
+    membersOnly: f.get("membersOnly") === "on",
   };
 }
 

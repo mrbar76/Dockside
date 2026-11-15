@@ -4,7 +4,7 @@ import { getTableColumns } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Tx } from "../db";
 import {
-  alertSubscriptions, applications, auditLog, clubPages, deliveries, documents, eventSignups, events, files, groupMembers, groups,
+  alertSubscriptions, applications, auditLog, dues, payments, clubPages, deliveries, documents, eventSignups, events, files, groupMembers, groups,
   households, members, notices, rideOffers, rideRequests,
 } from "../db/schema";
 
@@ -22,6 +22,8 @@ export const TABLES: Record<string, { table: PgTable; label: string }> = {
   "ride-offers": { table: rideOffers, label: "Open seats posted" },
   "ride-requests": { table: rideRequests, label: "Hands raised" },
   applications: { table: applications, label: "Membership applications" },
+  dues: { table: dues, label: "Dues bills" },
+  payments: { table: payments, label: "Payments" },
   documents: { table: documents, label: "Documents" },
   files: { table: files, label: "Uploaded files (names only)" },
   pages: { table: clubPages, label: "Club pages" },
